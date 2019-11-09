@@ -32,7 +32,7 @@ class Transformer(tf.keras.layers.Layer):
         self.transformer_layers = []
         for i in range(num_trans_layers):
             self.transformer_layers.append(Transformer_layer(hidden_size, num_heads, attention_dropout, hidden_layer_size, train))
-        self.conv1d = tf.keras.layers.Conv1D(hidden_size, 1)
+        self.conv1d = tf.keras.layers.Conv1D(hidden_size, 1, name="conv1d")
         self.linear_layer = tf.keras.layers.Dense(hidden_size, use_bias=True, name="linear_layer")
     
     def call(self, x, bias):
