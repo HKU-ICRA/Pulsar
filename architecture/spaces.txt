@@ -1,0 +1,51 @@
+Action space:
+
+1. x-direction velocity
+2. y-direction velocity
+3. Robot's yaw velocity
+
+Observation space (scalar):
+
+-   What = Match time
+    Info = The current match's time
+    Format = Scalar
+
+Observation space (entity):
+
+-   What = F1, F2, F3, F4, F5, F6 (Buff / debuff zones)
+    Info = Status of buff. Status of buff includes:
+        1. Restoration Zone
+        2. Projectile Supplier Zone
+        3. No Shooting Zone
+        4. No Moving Zone
+    Format = One-hot encoding with maximum 4 for each
+
+-   What = F1, F2, F3, F4, F5, F6 's activation status
+    Info = Activation status of buff. So whether it's used (activated) or not used (non-activated).
+    Format = One-hot encoding with maximum 2 for each
+
+-   What = Robot HP value
+    Info = How much health the robot currently has
+    Format = Scalar
+
+-   What = Number of projectiles that can be launched
+    Info = How many bullets the robot can shoot
+    Format = Scalar
+
+-   What = HP deduction
+    Info = Current HP deduction from robot
+    Format = Scalar
+
+-   What = Reason for HP deduction
+    Info = The reason for HP deduction from robot
+    Format = One-hot encoding
+
+-   What = Number of armor-module being attacked
+    Info = Same as above
+    Format = One-hot encoding
+
+-   What = Number of projectiles that have been launched
+    Info = Same as above
+    Format = Scalar
+
+Undecided = Launching Mechanism’s current launch speed, launch frequency and barrel heat
