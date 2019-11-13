@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<asset>
+        <mesh name="num1" file="num1.stl" scale="0.01 0.01 0.01"/>
+        <mesh name="gimbal_yaw" file="gimbal_yaw.stl" scale="0.003 0.003 0.003"/>
+        <mesh name="gimbal_pitch" file="gimbal_pitch.stl" scale="0.003 0.003 0.003"/>
+	</asset>
+    <!--size nconmax="5000" njmax="5000"></size-->
+	<option timestep="0.005"/>
+	<worldbody>
+		<body name="robot" pos="0.6 0.6 0.15">
+			<joint axis="1 0 0" damping="10" name="tx" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 1 0" damping="10" name="ty" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 0 1" damping="10000" name="tz" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 0 1" damping="10" name="rz" pos="0 0 0" type="hinge"></joint>
+
+            <body name="gimbal_yaw" pos="0 0 0">
+                <geom name="agent" mass="1" pos="0 0 0.05" mesh="gimbal_yaw" rgba="1 0 0 1" type="mesh" euler="1.57 0 0"></geom>
+            </body>
+            
+            <body name="gimbal_pitch" pos="-0.10 0 0.25">
+                <geom name="connector" mass="1" pos="0.10 0 0.02" rgba="1 1 1 1" size="0.03 0.08" type="cylinder" euler="1.57 0 0"></geom>
+                <geom name="barrel_head_geom" mass="0" pos="0.3 0 0" rgba="1 1 1 1" size="0.001 0.001 0.001" type="box" euler="0 0 0"></geom>
+                <body name="barrel_head" pos="0.4 0 0"></body>
+            </body>
+
+            <body name="chassis" pos="0 0 0">
+                <geom name="armor1" mesh="num1" mass="0.1" pos="0.25 0 0" rgba="1 0 0 1" type="mesh" euler="0 -0.174 -1.57"></geom>
+                <geom name="armor2" mesh="num1" mass="0.1" pos="-0.25 0 0" rgba="1 0 0 1" type="mesh" euler="0 0.174 1.57"></geom>
+                <geom name="armor3" mesh="num1" mass="0.1" pos="0 0.25 0" rgba="1 0 0 1" type="mesh" euler="0.174 0 0"></geom>
+                <geom name="armor4" mesh="num1" mass="0.1" pos="0 -0.25 0" rgba="1 0 0 1" type="mesh" euler="-0.174 0 3.14"></geom>
+            </body>
+		</body>
+        <body name="annotation:outer_bound" pos="0.6 0.6 0.15">
+			<geom conaffinity="0" contype="0" mass="0" pos="0 0 0" rgba="0.417 0.7203 0.0001 0.1" size="0.6 0.6 0.15" type="box"></geom>
+		</body>
+	</worldbody>
+	<actuator>
+		<motor name="motortx" ctrllimited="true" ctrlrange="-150 150" forcelimited="true" forcerange="-150 150" joint="tx"></motor>
+		<motor name="motorty" ctrllimited="true" ctrlrange="-150 150" forcelimited="true" forcerange="-150 150" joint="ty"></motor>
+		<motor name="motorrz" ctrllimited="true" ctrlrange="-150 150" forcelimited="true" forcerange="-100 100" joint="rz"></motor>
+	</actuator>
+</mujoco>

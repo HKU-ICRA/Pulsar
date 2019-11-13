@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<option timestep="0.005"/>
+	<worldbody>
+		<body name="simpleagent" pos="0.1 0.1 0.15">
+			<joint axis="1 0 0" name="tx" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 1 0" name="ty" pos="0 0 0" type="slide"></joint>
+            <geom name="agent" mass="1" pos="0 0 0.05" rgba="1 0 0 1" type="sphere" size="0.2"></geom>
+		</body>
+        <body name="annotation:outer_bound" pos="0.2 0.2 0.15">
+			<geom conaffinity="0" contype="0" mass="0" pos="0 0 0" rgba="0.417 0.7203 0.0001 0.1" size="0.2 0.2 0.15" type="box"></geom>
+		</body>
+	</worldbody>
+	<actuator>
+		<motor name="motortx" ctrllimited="true" ctrlrange="-250 250" forcelimited="true" forcerange="-250 250" joint="tx"></motor>
+		<motor name="motorty" ctrllimited="true" ctrlrange="-250 250" forcelimited="true" forcerange="-250 250" joint="ty"></motor>
+	</actuator>
+</mujoco>
