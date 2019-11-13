@@ -2,14 +2,18 @@ import os
 import sys
 from mpi4py import MPI
 
+from rmleague.league import League
 from environment.envs.simple import make_env
 from environment.envhandler import EnvHandler
 
 
 def main():
   """Trains the AlphaStar league."""
-  n_agents = 1
+  rmleague = League()
 
+  return
+
+  n_agents = 1
   for idx in range(n_agents):
     sub_comm  = MPI.COMM_SELF.Spawn_multiple([sys.executable, sys.executable],
                                  args=[['actor.py', str(idx), str(0.95), str(0.99)], ['learner.py', str(idx)]],

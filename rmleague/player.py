@@ -1,10 +1,8 @@
 import numpy as np
 
-from rmleague.historical import Historical
-
 
 class Player(object):
-  
+
   def get_match(self):
     pass
 
@@ -12,6 +10,7 @@ class Player(object):
     return False
 
   def _create_checkpoint(self):
+    from rmleague.historical import Historical
     return Historical(self, self.payoff)
 
   @property

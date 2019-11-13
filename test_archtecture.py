@@ -1,12 +1,12 @@
 import numpy as np
 import tensorflow as tf
 
-from core.deeplstm import DeepLstm
-from core.deepmlp import DeepMlp
-from entity_encoder.model_utils import get_padding_bias
-from entity_encoder.transformer import Transformer
-from scalar_encoder.embedding_layer import Embedding_layer
-from pulsar import Pulsar
+from architecture.core.deeplstm import DeepLstm
+from architecture.core.deepmlp import DeepMlp
+from architecture.entity_encoder.model_utils import get_padding_bias
+from architecture.entity_encoder.transformer import Transformer
+from architecture.scalar_encoder.embedding_layer import Embedding_layer
+from architecture.pulsar import Pulsar
 
 
 def test_deeplstm():
@@ -42,11 +42,12 @@ def test_scalar_encoder():
 
 def test_pulsar():
     pulsar = Pulsar(True)
-    scalar_features = {'match_time': np.array([[120], [110]])}
-    entities = np.array([[[0, 1, 0], [1, 0, 0]], [[0, 0, 1], [1, 1, 0]]], dtype=np.float32)
-    entity_masks = np.array([[0, 1], [1, 0]], dtype=np.float32)
-    action_xyvel_layer, action_yaw_layer = pulsar(scalar_features, entities, entity_masks)
-    print(action_xyvel_layer.shape, action_yaw_layer.shape)
+    scalar_features = {'match_time': np.array([[120], [110], [100]])}
+    entities = np.array([[[0, 1, 0], [1, 0, 0]], [[0, 0, 1], [1, 1, 0]], [[0, 0, 1], [1, 1, 0]]], dtype=np.float32)
+    entity_masks = np.array([[0, 1], [1, 0], [0, 1]], dtype=np.float32)
+    actions, neglogp, entropy = pulsar(scalar_features, entities, entity_masks)
+    for k, v in actions.items():
+        print(k + ":", actions[k].shape, neglogp[k].shape, entropy[k].shape)
 
 
 #test_scalar_encoder()

@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 from rmleague.player import Player
@@ -6,9 +7,11 @@ from rmleague.agent import Agent
 
 class MainPlayer(Player):
 
-  def __init__(self, agent, payoff):
-    self.agent = Agent(agent.get_weights())
+  def __init__(self, agent, payoff, player_file, name):
+    self.agent = agent
     self._payoff = payoff
+    self.player_file = player_file
+    self.name = name
     self._checkpoint_step = 0
 
   def _pfsp_branch(self):
@@ -99,4 +102,13 @@ class MainPlayer(Player):
   def checkpoint(self):
     self._checkpoint_step = self.agent.get_steps()
     return self._create_checkpoint()
+  
+  def save(self):
+    with open(self.player_file, 'wb') as f:
+      pickle.dump(self._checkpoint_step, f)
+  
+  def load(self):
+    if os.path.isfile(self.player_file):
+      with open(self.player_file, 'rb') as f:
+        self._checkpoint_step = pickle.load(f)
     

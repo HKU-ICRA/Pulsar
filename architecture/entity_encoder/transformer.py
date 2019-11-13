@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from entity_encoder.attention_layer import SelfAttention
+from architecture.entity_encoder.attention_layer import SelfAttention
 
 
 class Transformer_layer(tf.keras.layers.Layer):
