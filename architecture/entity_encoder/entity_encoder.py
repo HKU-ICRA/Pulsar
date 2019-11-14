@@ -16,7 +16,41 @@ class Entity_encoder():
         Returns:
             One hot encoding with shape [batch_size, n_entities, feature_size]
         """
-        pass
+        qpos = np.expand_dims(np.array(all_obs['observation_self'][0:1, 0:4], dtype=np.float32), axis=1)
+        qvel = np.expand_dims(np.array(all_obs['observation_self'][0:1, 4:8], dtype=np.float32), axis=1)
+        health = np.expand_dims(np.array([[all_obs['observation_self'][0, 8], 0, 0, 0]], dtype=np.float32), axis=1)
+        opp_qpos = np.array(all_obs['agent_qpos_qvel'][0:1, :, 0:4], dtype=np.float32)
+        opp_qvel = np.array(all_obs['agent_qpos_qvel'][0:1, :, 4:8], dtype=np.float32)
+
+        padding = np.array([[1, 1, 1, 1, 1]], dtype=np.float32)
+
+        return np.concatenate([qpos, qvel, health, opp_qpos, opp_qvel], axis=1), padding
+
+    def get_baseline(self, all_obs):
+        return np.concatenate([np.array(all_obs['observation_self'][0:1], dtype=np.float32), np.array(all_obs['observation_self'][1:2], dtype=np.float32)], axis=1)
+
+    def concat_opp_encoded_entity_obs(self, all_obs):
+        """
+        Returns all of opponent's encoded entities as a concaternation.
+
+        Args:
+            all_obs: pass
+
+        Returns:
+            One hot encoding with shape [batch_size, n_entities, feature_size]
+        """
+        qpos = np.expand_dims(np.array(all_obs['observation_self'][1:2, 0:4], dtype=np.float32), axis=1)
+        qvel = np.expand_dims(np.array(all_obs['observation_self'][1:2, 4:8], dtype=np.float32), axis=1)
+        health = np.expand_dims(np.array([[all_obs['observation_self'][1, 8], 0, 0, 0]], dtype=np.float32), axis=1)
+        opp_qpos = np.array(all_obs['agent_qpos_qvel'][1:2, :, 0:4], dtype=np.float32)
+        opp_qvel = np.array(all_obs['agent_qpos_qvel'][1:2, :, 4:8], dtype=np.float32)
+
+        padding = np.array([[1, 1, 1, 1, 1]], dtype=np.float32)
+
+        return np.concatenate([qpos, qvel, health, opp_qpos, opp_qvel], axis=1), padding
+
+    def get_opp_baseline(self, all_obs):
+        return np.concatenate([np.array(all_obs['observation_self'][1:2], dtype=np.float32), np.array(all_obs['observation_self'][0:1], dtype=np.float32)], axis=1)
 
     def encode_zone(self, f):
         """

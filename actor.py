@@ -5,8 +5,10 @@ import numpy as np
 import time
 from mpi4py import MPI
 
-from environment.envs.simple import make_env
+from environment.envs.base import make_env
 from environment.envhandler import EnvHandler
+from architecture.pulsar import Pulsar
+from architecture.entity_encoder.entity_encoder import Entity_encoder
 
 
 comm = MPI.Comm.Get_parent()
@@ -19,120 +21,113 @@ lam = float(sys.argv[2])
 gamma = float(sys.argv[3])
 # Training parameters
 training_duration = 5 # seconds
-
-env = EnvHandler(make_env(env_no=0))
-n_agents = env.n_actors
-nenv = 1
+learner_bound = int(sys.argv[4])
+# Build network architecture
+pulsar = Pulsar(training=True)
+pulsar.call_build()
+opponent_pulsar = Pulsar(training=False)
+opponent_pulsar.call_build()
+entity_encoder = Entity_encoder()
+# Setup environment
+env = EnvHandler(make_env(env_no=agent_index * rank + rank))
 obs = env.reset()
+n_agents = env.n_actors
 states = None
-dones = [False for _ in range(nenv)]
+opponent_states = None
+dones = False
 
 while True:
-    player = MPI.COMM_WORLD.recv()
-    model = player.get_model()
-    if states == None:
-        states = {k: np.repeat(v, nenv, axis=0) for k, v in model.initial_state.items()}
-    opponent = player.get_match()
+    agent = MPI.COMM_WORLD.recv()
+    opponent = comm.recv()
+    
+    pulsar.set_weights(agent.get_weights())
+    opponent_pulsar.set_weights(opponent.get_weights())
 
-    mb_rewards = [[] for _ in range(n_agents)]
-    mb_values = [[] for _ in range(n_agents)]
-    mb_neglogpacs = [[] for _ in range(n_agents)]
-    mb_obs = [{k: [] for k in env.observation_space.spaces.keys()} for _ in range(n_agents)]
-    mb_actions = [{k: [] for k in env.action_space.spaces.keys()} for _ in range(n_agents)]
-    mb_dones = [[] for _ in range(n_agents)]
+    mb_rewards = []
+    mb_values = []
+    mb_neglogpacs = []
+    mb_dones = []
+    mb_scalar_features = {'match_time': []}
+    mb_entities = []
+    mb_entity_masks = []
+    mb_baselines = []
+    mb_actions_xy = []
+    mb_actions_yaw = []
     mb_states = states
-    model.set_state(states)
 
     start_time = time.time()
     while time.time() - start_time <  training_duration:
         # Reset model lstm states if done
-        for i in range(nenv): 
-            if dones[i]:
-                for k, v in model.get_zero_states().items():
-                    states[k][i] = v
-            
+        if dones:
+            for idx in range(len(states)):
+                states[idx] = None
         # Given observations, get action value and neglopacs
         # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
         agent_actions = []
-
-        for i in range(n_agents):
-            obs_dc = deepcopy(obs)
-            sa_obs = {k: v[:, i:i+1, :] for k, v in obs_dc.items()}
-            actions, info = model.step(sa_obs)
-            actions_dc = deepcopy(actions)
-            info_dc = deepcopy(info)
-            agent_actions.append(actions_dc)
-            mb_values[i].append(info_dc['vpred'])
-            mb_neglogpacs[i].append(info_dc['ac_neglogp'])
-            states = info_dc['state']
-            mb_dones[i].append(deepcopy(dones))  
-            for k, v in actions_dc.items():
-                mb_actions[i][k].append(v)
-            for k, v in sa_obs.items():
-                mb_obs[i][k].append(v)
-                
+        # Get actions of training agent
+        obs_dc = deepcopy(obs)
+        entities, entity_masks = entity_encoder.concat_encoded_entity_obs(obs_dc)
+        scalar_features = {'match_time': np.array([[time.time() - start_time]])}
+        baseline = entity_encoder.get_baseline(obs_dc)
+        actions, neglogp, entropy, mean, value, states = pulsar(scalar_features, entities, entity_masks, baseline, states)
+        mb_values.append(value)
+        mb_neglogpacs.append(neglogp)
+        mb_scalar_features['match_time'] += list(scalar_features['match_time'])
+        mb_entities += list(entities)
+        mb_entity_masks += list(entity_masks)
+        mb_baselines += list(baseline)
+        mb_actions_xy += list(actions['xyvel'])
+        mb_actions_yaw += list(actions['yaw'])
+        agent_actions.append({'action_movement': [np.array(actions['xyvel'])[0][0], np.array(actions['xyvel'])[0][1], np.array(actions['yaw'])[0][0]]})
+        # Get actions of opponent agent
+        obs_dc = deepcopy(obs)
+        entities, entity_masks = entity_encoder.concat_opp_encoded_entity_obs(obs_dc)
+        baseline = entity_encoder.get_opp_baseline(obs_dc)
+        opp_actions, _, _, _, _, opponent_states = opponent_pulsar(scalar_features, entities, entity_masks, baseline, opponent_states)
+        agent_actions.append({'action_movement': [np.array(opp_actions['xyvel'])[0][0], np.array(opp_actions['xyvel'])[0][1], np.array(opp_actions['yaw'])[0][0]]})
         # Take actions in env and look the results
         per_act = {k: [] for k in agent_actions[0].keys()}
         for z in range(n_agents):
             for k, v in agent_actions[z].items():
-                per_act[k].append(v[e])
+                per_act[k].append(v)
         for k, v in per_act.items():
             per_act[k] = np.array(v)
 
-        obs, rewards, dones, infos = env.step([per_act])
+        obs, rewards, dones, infos = env.step(per_act)
 
-        for i in range(n_agents):
-            mb_rewards[i].append(deepcopy(rewards)[:, i:i+1])
+        mb_rewards.append(deepcopy(rewards)[0])
+        mb_dones.append(dones)
         
     #batch of steps to batch of rollouts
-    last_values = [[] for _ in range(n_agents)]
-    for i in range(n_agents):
-        mb_rewards[i] = np.squeeze(np.asarray(mb_rewards[i], dtype=np.float32), -1)
-        mb_values[i] = np.asarray(mb_values[i], dtype=np.float32)
-        mb_neglogpacs[i] = np.asarray(mb_neglogpacs[i], dtype=np.float32)
-        mb_dones[i] = np.asarray(mb_dones[i], dtype=np.bool)
-        sa_obs = {k: v[:, i:i+1, :] for k, v in deepcopy(obs).items()}
-        last_values[i] = np.squeeze(deepcopy(model.value(sa_obs)), -1)
-
+    mb_rewards = np.asarray(mb_rewards, dtype=np.float32) #np.squeeze(np.asarray(mb_rewards[i], dtype=np.float32), -1)
+    mb_values = np.asarray(mb_values, dtype=np.float32)
+    mb_dones = np.asarray(mb_dones, dtype=np.bool)
+    last_values = 0 #np.squeeze(deepcopy(model.value(sa_obs)), -1)
     # discount/bootstrap off value fn
-    mb_returns = [np.zeros_like(mb_rewards[i]) for i in range(n_agents)]
-    mb_advs = [np.zeros_like(mb_rewards[i]) for i in range(n_agents)]
+    mb_returns = np.zeros_like(mb_rewards)
+    mb_advs = np.zeros_like(mb_rewards)
+    lastgaelam = 0
+    # perform GAE calculation
+    nsteps = mb_rewards.shape[0]
+    for t in reversed(range(nsteps)):
+        if t == nsteps - 1:
+            nextnonterminal = 1.0 - dones
+            nextvalues = last_values
+        else:
+            nextnonterminal = 1.0 - mb_dones[t+1]
+            nextvalues = mb_values[t+1]
+        delta = mb_rewards[t] + gamma * nextvalues * nextnonterminal - mb_values[t]
+        mb_advs[t] = lastgaelam = delta + gamma * lam * nextnonterminal * lastgaelam
+    mb_returns = mb_advs + mb_values
 
-    lastgaelam = [0 for _ in range(n_agents)]
-    nsteps = len(mb_obs[0])
-    for i in range(n_agents):
-        for t in reversed(range(nsteps)):
-            if t == nsteps - 1:
-                nextnonterminal = 1.0 - dones
-                nextvalues = last_values[i]
-            else:
-                nextnonterminal = 1.0 - mb_dones[i][t+1]
-                nextvalues = mb_values[i][t+1]
-            delta = mb_rewards[i][t] + gamma * nextvalues * nextnonterminal - mb_values[i][t]
-            mb_advs[i][t] = lastgaelam[i] = delta + gamma * lam * nextnonterminal * lastgaelam[i]
-        mb_returns[i] = mb_advs[i] + mb_values[i]
+    for k, v in mb_scalar_features.items():
+        mb_scalar_features[k] = np.asarray(mb_scalar_features[k])
 
-    mb_obs[i], mb_actions[i] = dsf01(mb_obs[i]), dsf01(mb_actions[i])
-    mb_returns[i], mb_dones[i], mb_values[i], mb_neglogpacs[i] = sf01(mb_returns[i]), sf01(mb_dones[i]), sf01(mb_values[i]), sf01(mb_neglogpacs[i])
-        
-    mb_obs = dconcat(np.asarray(mb_obs))
-    mb_actions = dconcat(np.asarray(mb_actions))
-    mb_returns = f01(np.asarray(mb_returns))
-    mb_dones = f01(np.asarray(mb_dones))
-    mb_values = f01(np.asarray(mb_values))
-    mb_neglogpacs = f01(np.asarray(mb_neglogpacs))
-        
-    mb_states_final = np.asarray([{k: v[i:i+1] for k, v in deepcopy(states).items()} for i in range(nenv)])
-    
-    trajectory = {'mb_obs': mb_obs, 'mb_actions': mb_actions, 'mb_returns': mb_returns,
-                  'mb_dones': mb_dones, 'mb_values': mb_values, 'mb_neglogpacs': mb_neglogpacs,
-                  'mb_states_final': mb_states_final}
+    trajectory = {'mb_scalar_features': mb_scalar_features, 'mb_entities': np.asarray(mb_entities),
+                  'mb_entity_masks': np.asarray(mb_entity_masks), 'mb_baselines': np.asarray(mb_baselines),
+                  'mb_actions_xy': mb_actions_xy, 'mb_actions_yaw': mb_actions_yaw,
+                  'mb_returns': mb_returns, 'mb_dones': mb_dones, 'mb_values': mb_values,
+                  'mb_neglogpacs': mb_neglogpacs, 'mb_states': np.asarray(mb_states)}
 
-    c = MPI.COMM_WORLD.send(trajectory, dest=1)
-    
-
-'''
-b = MPI.COMM_WORLD.recv()
-print("Received msg:", b)
-c = MPI.COMM_WORLD.send("From actor", dest=1)
-'''
+    MPI.COMM_WORLD.send(trajectory, dest=learner_bound)
+    break

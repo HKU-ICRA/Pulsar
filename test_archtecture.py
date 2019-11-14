@@ -45,9 +45,12 @@ def test_pulsar():
     scalar_features = {'match_time': np.array([[120], [110], [100]])}
     entities = np.array([[[0, 1, 0], [1, 0, 0]], [[0, 0, 1], [1, 1, 0]], [[0, 0, 1], [1, 1, 0]]], dtype=np.float32)
     entity_masks = np.array([[0, 1], [1, 0], [0, 1]], dtype=np.float32)
-    actions, neglogp, entropy = pulsar(scalar_features, entities, entity_masks)
+    baseline = np.array([[0,1,1], [0,0,1], [0,1,0]], dtype=np.float32)
+    print(scalar_features['match_time'].shape, entities.shape, entity_masks.shape, baseline.shape)
+    actions, neglogp, entropy, mean, value, new_state = pulsar(scalar_features, entities, entity_masks, baseline)
     for k, v in actions.items():
         print(k + ":", actions[k].shape, neglogp[k].shape, entropy[k].shape)
+    print('value:', value.shape)
 
 
 #test_scalar_encoder()

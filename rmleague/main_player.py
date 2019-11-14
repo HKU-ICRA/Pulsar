@@ -2,7 +2,11 @@ import os
 import numpy as np
 
 from rmleague.player import Player
+from rmleague.historical import Historical
+from rmleague.main_exploiter import MainExploiter
+from rmleague.league_exploiter import LeagueExploiter
 from rmleague.agent import Agent
+from rmleague.player_utils import remove_monotonic_suffix, pfsp
 
 
 class MainPlayer(Player):
@@ -103,6 +107,19 @@ class MainPlayer(Player):
     self._checkpoint_step = self.agent.get_steps()
     return self._create_checkpoint()
   
+  def get_agent(self):
+    return self.agent
+  
+  def set_agent(self, agent):
+    self.agent = agent
+
+  def get_weights(self):
+    return self.agent.get_weights()
+
+  @property
+  def agent_file(self):
+    return self.agent.agent_file
+
   def save(self):
     with open(self.player_file, 'wb') as f:
       pickle.dump(self._checkpoint_step, f)

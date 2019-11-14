@@ -125,28 +125,17 @@ class ProjectileWrapper(gym.Wrapper):
             
         hits = self.projmang.query(sim)
         for i, h in enumerate(hits):
-            #self.metadata['agents_health'][i] -= h * 1.5
+            self.metadata['agents_health'][i] -= h * 1.5
             #projectile_rew[i] += -1.0
             #projectile_rew[1 - i] += 1.0
-            pass
     
     def step(self, action):
         obs, rew, done, info = self.env.step(action)
         projectile_rew = np.array([0 for a in range(self.n_agents)], dtype=np.float64)
         self.shoot_projectile(obs, projectile_rew)
         #rew += projectile_rew
-        sim = self.unwrapped.sim
-        agent_bodies_id = np.array([sim.model.body_name2id(f"agent{i}:chassis") for i in range(self.n_agents)])
-        #agent_bodies = [sim.data.body_xpos[agent_bodies_id[0]], sim.data.body_xpos[agent_bodies_id[1]]]
-        agent_bodies = [sim.data.body_xpos[agent_bodies_id[0]]]
-        if np.linalg.norm(agent_bodies[0] - np.array([1.5, 1.5, 0.15])) <= 0.2:
-            projectile_rew[0] += 10000
-            done = True
-        else:
-            projectile_rew[0] += -np.linalg.norm(agent_bodies[0] - np.array([3.5, 3.5, 0.15]))
-        #projectile_rew[1] += -np.linalg.norm(agent_bodies[1] - np.array([1.5, 1.5, 0.15]))
-        #print(np.linalg.norm(agent_bodies[0] - np.array([1.5, 1.5, 0.15])))
+        #sim = self.unwrapped.sim
         #print(self.metadata['agents_health'])
-        rew += projectile_rew
-        #print(rew)
+        #rew += projectile_rew
+        #print(self.metadata['agents_health'])
         return obs, rew, done, info

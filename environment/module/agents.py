@@ -22,7 +22,7 @@ class AgentObjFromXML(ObjFromXML):
         If you want to use custom XMLs, subclass this class and overwrite this
         method to return the path to your 'xmls' folder
         '''
-        return './assets/xmls/' + args[0]
+        return os.path.join(os.getcwd(), "environment", "assets", "xmls", args[0])
 
 
 def agent_set_action(sim, action):
@@ -130,7 +130,8 @@ class Agents(EnvModule):
         obs = {
             'agent_qpos_qvel': agent_qpos_qvel,
             'agent_angle': agent_angle,
-            'agent_pos': agent_qpos[:, :3]}
+            'agent_pos': agent_qpos[:, :3]
+              }
 
         return obs
 

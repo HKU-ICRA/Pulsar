@@ -52,8 +52,8 @@ class HealthWrapper(gym.Wrapper):
 
         for i, ah in enumerate(agents_hp):
             if (ah[0] <= 0):
-                health_rew[i] += -1000
-                health_rew[1 - i] += 1000
+                health_rew[i] += -1
+                health_rew[1 - i] += 1
                 done = True
         
         rew += health_rew

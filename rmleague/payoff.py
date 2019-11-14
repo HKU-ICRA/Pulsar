@@ -1,6 +1,8 @@
 import collections
 import numpy as np
 
+from rmleague.player import Player
+
 
 class Payoff:
 

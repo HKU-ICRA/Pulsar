@@ -4,6 +4,7 @@ import tensorflow as tf
 from architecture.core.deeplstm import DeepLstm
 from architecture.core.deepmlp import DeepMlp
 from architecture.core.glu import Glu
+from architecture.core.resnet import Resnet
 from architecture.entity_encoder.model_utils import get_padding_bias
 from architecture.entity_encoder.transformer import Transformer, Transformer_layer
 from architecture.scalar_encoder.embedding_layer import Embedding_layer
@@ -22,6 +23,7 @@ class Pulsar(tf.keras.Model):
     def __init__(self, training):
         super(Pulsar, self).__init__()
         self.training = training
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5, beta_1=0, beta_2=0.99, epsilon=1e-5)
         with tf.name_scope("scalar_encoder"):
             self.match_time_encoder = Embedding_layer(num_units=64)
         with tf.name_scope("entity_encoder"):
@@ -52,6 +54,10 @@ class Pulsar(tf.keras.Model):
                                               name="mean_yaw")
             zeros_initializer_yaw = tf.zeros_initializer()
             self.logstd_yaw = tf.Variable(name="logstd_yaw", initial_value=zeros_initializer_yaw([1, 1]))
+        with tf.name_scope("value"):
+            self.value_encoder = tf.keras.layers.Dense(256, activation=tf.nn.relu, name="value_encoder")
+            self.resnet = Resnet(n_blocks=10, n_units=256)
+            self.value = tf.keras.layers.Dense(1, name="value")
 
     def load(self, model_path):
         pass
@@ -68,7 +74,19 @@ class Pulsar(tf.keras.Model):
                + 0.5 * np.log(2.0 * np.pi) * tf.dtypes.cast(tf.shape(x)[-1], dtype=tf.float32) \
                + tf.reduce_sum(self.logstd_yaw, axis=-1)
 
-    def call(self, scalar_features, entities, entity_masks, state=None):
+    def call_build(self):
+        """
+        IMPORTANT: This function has to be editted so that the below input features
+        have the same shape as the actual inputs, otherwise the weights would not
+        be restored properly.
+        """
+        scalar_features = {'match_time': np.array([[120]])}
+        entities = np.array([[[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]], dtype=np.float32)
+        entity_masks = np.array([[1, 1, 1, 1, 1]], dtype=np.float32)
+        baseline = np.array([[1 for _ in range(18)]], dtype=np.float32)
+        self(scalar_features, entities, entity_masks, baseline)
+
+    def call(self, scalar_features, entities, entity_masks, baseline, state=None):
         """
         Foward-pass neural network Pulsar.
 
@@ -104,7 +122,7 @@ class Pulsar(tf.keras.Model):
             embedding_2 = tf.expand_dims(embedding_2, axis=1)
             attention_input = tf.concat([embedding_2, entity_embeddings], axis=1)
             action_yaw_layer = self.attention(attention_input, 0)
-            action_yaw_layer = tf.reduce_mean(action_yaw_layer, axis=1)
+            action_yaw_layer = tf.reduce_sum(action_yaw_layer, axis=1)
         with tf.name_scope('xyvel'):
             std_xy = tf.exp(self.logstd_xy)
             mean_xy = self.mean_xy(action_xyvel_layer)
@@ -117,9 +135,16 @@ class Pulsar(tf.keras.Model):
             sampled_yaw = mean_yaw + std_yaw * tf.random.normal(tf.shape(mean_yaw))
             sampled_yaw_neglogp = self.neglogp_yaw(mean_yaw, sampled_yaw)
             entropy_yaw = tf.reduce_sum(self.logstd_yaw + .5 * np.log(2.0 * np.pi * np.e), axis=-1)
-            
+        with tf.name_scope('value'):
+            flattened_baseline = tf.reshape(baseline, shape=[tf.shape(core_output)[0], -1])
+            value_input = tf.concat([core_output, flattened_baseline], axis=1)
+            value_encode = self.value_encoder(value_input)
+            value_output = self.resnet(value_encode)
+            value = self.value(value_output)
+
         actions = {'xyvel': sampled_xyvel, 'yaw': sampled_yaw}
         neglogp = {'xyvel': sampled_xyvel_neglogp, 'yaw': sampled_yaw_neglogp}
         entropy = {'xyvel': entropy_xy, 'yaw': entropy_yaw}
+        mean = {'xyvel': mean_xy, 'yaw': mean_yaw}
 
-        return actions, neglogp, entropy
+        return actions, neglogp, entropy, mean, value, new_state

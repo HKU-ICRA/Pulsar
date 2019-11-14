@@ -101,10 +101,12 @@ class Base(Env):
         return sim
 
 
-def make_env(n_substeps=3, horizon=250, deterministic_mode=False, n_agents=1, env_no=1):
+def make_env(n_substeps=3, horizon=250, deterministic_mode=False, n_agents=2, env_no=1):
     
     env = Base(n_agents=n_agents, n_substeps=n_substeps, horizon=horizon,
-               floor_size=10, grid_size=50, deterministic_mode=deterministic_mode, env_no=env_no)
+               floor_size=10, grid_size=50, deterministic_mode=deterministic_mode, env_no=env_no,
+               meshdir=os.path.join(os.getcwd(), "environment", "assets", "stls"),
+               texturedir=os.path.join(os.getcwd(), "environment", "assets", "texture"))
     
     # Add Walls
     #env.add_module(RandomWalls(grid_size=5, num_rooms=2, min_room_size=5, door_size=5, low_outside_walls=True, outside_wall_rgba="1 1 1 0.1"))
@@ -116,34 +118,34 @@ def make_env(n_substeps=3, horizon=250, deterministic_mode=False, n_agents=1, en
     env.add_module(Agents(n_agents, placement_fn=agent_placement_fn))
     
     # Add LidarSites
-    n_lidar_per_agent = 1
-    visualize_lidar = False
-    compress_lidar_scale = None
-    if visualize_lidar:
-        env.add_module(LidarSites(n_agents=n_agents, n_lidar_per_agent=n_lidar_per_agent))
+    #n_lidar_per_agent = 1
+    #visualize_lidar = False
+    #compress_lidar_scale = None
+    #if visualize_lidar:
+    #    env.add_module(LidarSites(n_agents=n_agents, n_lidar_per_agent=n_lidar_per_agent))
 
     env.reset()
 
     keys_self = ['agent_qpos_qvel']
     keys_mask_self = []#['mask_aa_obs']
-    keys_external = []#['agent_qpos_qvel']
+    keys_external = ['agent_qpos_qvel']
     keys_mask_external = []
     keys_copy = []
 
     env = AddConstantObservationsWrapper(env, new_obs={'agents_health': np.full((n_agents, 1), 100.0)})
     keys_self += ['agents_health']
     env = ProjectileWrapper(env)
-    #env = HealthWrapper(env)
+    env = HealthWrapper(env)
 
     env = SplitMultiAgentActions(env)
-    env = DiscretizeActionWrapper(env, 'action_movement')
+    #env = DiscretizeActionWrapper(env, 'action_movement')
     env = AgentAgentObsMask2D(env)
 
-    if n_lidar_per_agent > 0:
-        env = Lidar(env, n_lidar_per_agent=n_lidar_per_agent, visualize_lidar=visualize_lidar,
-                    compress_lidar_scale=compress_lidar_scale)
-        keys_copy += ['lidar']
-        keys_external += ['lidar']
+    #if n_lidar_per_agent > 0:
+    #    env = Lidar(env, n_lidar_per_agent=n_lidar_per_agent, visualize_lidar=visualize_lidar,
+    #                compress_lidar_scale=compress_lidar_scale)
+    #    keys_copy += ['lidar']
+    #    keys_external += ['lidar']
 
     env = SplitObservations(env, keys_self + keys_mask_self, keys_copy=keys_copy)
     env = DiscardMujocoExceptionEpisodes(env)

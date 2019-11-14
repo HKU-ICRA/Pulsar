@@ -10,21 +10,6 @@ from rmleague.league_exploiter import LeagueExploiter
 from architecture.pulsar import Pulsar
 
 
-def pfsp(win_rates, weighting="linear"):
-    weightings = {
-        "variance": lambda x: x * (1 - x),
-        "linear": lambda x: 1 - x,
-        "linear_capped": lambda x: np.minimum(0.5, 1 - x),
-        "squared": lambda x: (1 - x)**2,
-    }
-    fn = weightings[weighting]
-    probs = fn(np.asarray(win_rates))
-    norm = probs.sum()
-    if norm < 1e-10:
-        return np.ones_like(win_rates) / len(win_rates)
-    return probs / norm
-
-
 def get_agent_files(name):
   model_file = os.path.join(os.getcwd(), 'data', 'model:'+name)
   agent_file = os.path.join(os.getcwd(), 'data', 'agent:'+name)
@@ -49,11 +34,7 @@ class League(object):
     self._learning_agents = []
 
     pulsar = Pulsar(False)
-    # Inputs to build network
-    scalar_features = {'match_time': np.array([[120], [110]])}
-    entities = np.array([[[0, 1, 0], [1, 0, 0]], [[0, 0, 1], [1, 1, 0]]], dtype=np.float32)
-    entity_masks = np.array([[0, 1], [1, 0]], dtype=np.float32)
-    pulsar(scalar_features, entities, entity_masks)
+    pulsar.call_build()    
 
     for idx in range(main_agents):
       ma_name = "main_agent:"+str(idx)
@@ -64,7 +45,7 @@ class League(object):
       main_agent = MainPlayer(ma_agent, self._payoff, ma_player_file, name=ma_name)
       main_agent.load()
       self._learning_agents.append(main_agent)
-      #self._payoff.add_player(main_agent.checkpoint())
+      self._payoff.add_player(main_agent.checkpoint())
 
     for idx in range(main_exploiters):
       me_name = "main_exploit:"+str(idx)
@@ -94,6 +75,12 @@ class League(object):
 
   def get_player(self, idx):
     return self._learning_agents[idx]
+  
+  def get_player_agent(self, idx):
+    return self._learning_agents[idx].get_agent()
+  
+  def set_player_agent(self, idx, agent):
+    self._learning_agents[idx].set_agent(agent)
 
   def add_player(self, player):
     self._payoff.add_player(player)
