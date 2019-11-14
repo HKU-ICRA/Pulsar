@@ -60,8 +60,7 @@ while True:
     while time.time() - start_time <  training_duration:
         # Reset model lstm states if done
         if dones:
-            for idx in range(len(states)):
-                states[idx] = None
+            states = None
         # Given observations, get action value and neglopacs
         # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
         agent_actions = []
@@ -130,7 +129,6 @@ while True:
                   'mb_actions_xy': mb_actions_xy, 'mb_actions_yaw': mb_actions_yaw,
                   'mb_returns': mb_returns, 'mb_dones': mb_dones, 'mb_values': mb_values,
                   'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy), 'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw),
-                  'mb_states': np.asarray(mb_states)}
+                  'mb_states': mb_states}
 
     MPI.COMM_WORLD.send(trajectory, dest=learner_bound)
-    break
