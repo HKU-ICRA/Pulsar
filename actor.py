@@ -45,7 +45,8 @@ while True:
 
     mb_rewards = []
     mb_values = []
-    mb_neglogpacs = []
+    mb_neglogpacs_xy = []
+    mb_neglogpacs_yaw = []
     mb_dones = []
     mb_scalar_features = {'match_time': []}
     mb_entities = []
@@ -71,7 +72,8 @@ while True:
         baseline = entity_encoder.get_baseline(obs_dc)
         actions, neglogp, entropy, mean, value, states = pulsar(scalar_features, entities, entity_masks, baseline, states)
         mb_values.append(value)
-        mb_neglogpacs.append(neglogp)
+        mb_neglogpacs_xy += list(neglogp['xyvel'])
+        mb_neglogpacs_yaw += list(neglogp['yaw'])
         mb_scalar_features['match_time'] += list(scalar_features['match_time'])
         mb_entities += list(entities)
         mb_entity_masks += list(entity_masks)
@@ -127,7 +129,8 @@ while True:
                   'mb_entity_masks': np.asarray(mb_entity_masks), 'mb_baselines': np.asarray(mb_baselines),
                   'mb_actions_xy': mb_actions_xy, 'mb_actions_yaw': mb_actions_yaw,
                   'mb_returns': mb_returns, 'mb_dones': mb_dones, 'mb_values': mb_values,
-                  'mb_neglogpacs': mb_neglogpacs, 'mb_states': np.asarray(mb_states)}
+                  'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy), 'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw),
+                  'mb_states': np.asarray(mb_states)}
 
     MPI.COMM_WORLD.send(trajectory, dest=learner_bound)
     break
