@@ -47,6 +47,7 @@ while True:
     mb_neglogpacs = mb_neglogpacs_xy + mb_neglogpacs_yaw
     mb_states = trajectory['mb_states']
     nsteps = mb_returns.shape[0]
+    agent.add_steps(nsteps)
 
     if mb_states != None:
         for i in range(len(mb_states)):
@@ -107,4 +108,4 @@ while True:
     for idx in range(actor_lower_bound, actor_upper_bound):
         MPI.COMM_WORLD.send(agent, dest=idx)
     # Send updated agent to coordinator
-
+    comm.send(agent, dest=0)

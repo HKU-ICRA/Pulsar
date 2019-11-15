@@ -93,7 +93,8 @@ class MainPlayer(Player):
 
   def ready_to_checkpoint(self):
     steps_passed = self.agent.get_steps() - self._checkpoint_step
-    if steps_passed < 2e9:
+    #if steps_passed < 2e9:
+    if steps_passed < 1e3:
       return False
 
     historical = [

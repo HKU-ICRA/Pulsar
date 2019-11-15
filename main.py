@@ -14,7 +14,7 @@ def main():
     """
     rmleague = League()
 
-    n_agents = 1
+    n_agents = 3
     actor_procs = 1
     learner_procs = 1
 
@@ -23,9 +23,9 @@ def main():
     actor_upper_bounds = []
 
     for idx in range(n_agents):
-        actor_lower_bound = idx * (actor_procs + learner_procs)
-        actor_upper_bound = idx * (actor_procs + learner_procs) + actor_procs
-        learner_bound = idx * (actor_procs + learner_procs) + actor_procs + learner_procs - 1
+        actor_lower_bound = 0
+        actor_upper_bound = actor_procs
+        learner_bound = actor_procs + learner_procs - 1
 
         actor_lower_bounds.append(actor_lower_bound)
         actor_upper_bounds.append(actor_upper_bound)
@@ -41,20 +41,38 @@ def main():
 
         agent = rmleague.get_player_agent(idx)
         sub_comm.send(agent, dest=learner_bound)
-
-        player = rmleague.get_player(idx)
-        opponent, tf = player.get_match()
-        for ai in range(actor_lower_bound, actor_upper_bound):
-            sub_comm.send(opponent.get_agent(), dest=ai)
     
     # Start coordinator loop
+    opponent_coordinator = dict()
     while True:
         for idx in range(n_agents):
             player = rmleague.get_player(idx)
             opponent, tf = player.get_match()
+            opponent_coordinator[idx] = opponent
             for ai in range(actor_lower_bounds[idx], actor_upper_bounds[idx]):
                 sub_comms[idx].send(opponent.get_agent(), dest=ai)
-  
+        for idx in range(n_agents):
+            player = rmleague.get_player(idx)
+            opponent = opponent_coordinator[idx]
+            for ai in range(actor_lower_bounds[idx], actor_upper_bounds[idx]):
+                traj_outcome = sub_comms[idx].recv()
+                rmleague.update(player, opponent, traj_outcome['outcome'])
+                if player.ready_to_checkpoint():
+                    rmleague.add_player(player.checkpoint())
+        for idx in range(n_agents):
+            player = rmleague.get_player(idx)
+            new_agent = sub_comms[idx].recv()
+            player.set_agent(new_agent)
+        # Report progress
+        for idx in range(n_agents):
+            print("Player", str(idx), "steps:", rmleague.get_player_agent(idx).get_steps())
+        print("Players:", len(rmleague._payoff._players))
+        print("Payoff games:", rmleague._payoff._games.values())
+        print("Payoff wins:", rmleague._payoff._wins.values())
+        print("Payoff draws:", rmleague._payoff._draws.values())
+        print("Payoff loses:", rmleague._payoff._losses.values())
+        sys.stdout.flush()
+
 
 if __name__ == '__main__':
   main()

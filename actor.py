@@ -56,6 +56,9 @@ while True:
     mb_actions_yaw = []
     mb_states = states
 
+    agent_rewards = 0
+    opponent_rewards = 0
+
     start_time = time.time()
     while time.time() - start_time <  training_duration:
         # Reset model lstm states if done
@@ -96,6 +99,8 @@ while True:
 
         obs, rewards, dones, infos = env.step(per_act)
 
+        agent_rewards += rewards[0]
+        opponent_rewards += rewards[1]
         mb_rewards.append(deepcopy(rewards)[0])
         mb_dones.append(dones)
         
@@ -124,11 +129,20 @@ while True:
     for k, v in mb_scalar_features.items():
         mb_scalar_features[k] = np.asarray(mb_scalar_features[k])
 
+    # Send match outcome to coordinator
+    if agent_rewards > opponent_rewards:
+        match_outcome = "win"
+    elif agent_rewards == opponent_rewards:
+        match_outcome = "draw"
+    else:
+        match_outcome = "lose"
+    traj_outcome = {'outcome': match_outcome}
+    comm.send(traj_outcome, dest=0)
+    # Send trajectory to learner
     trajectory = {'mb_scalar_features': mb_scalar_features, 'mb_entities': np.asarray(mb_entities),
                   'mb_entity_masks': np.asarray(mb_entity_masks), 'mb_baselines': np.asarray(mb_baselines),
                   'mb_actions_xy': mb_actions_xy, 'mb_actions_yaw': mb_actions_yaw,
                   'mb_returns': mb_returns, 'mb_dones': mb_dones, 'mb_values': mb_values,
                   'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy), 'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw),
                   'mb_states': mb_states}
-
     MPI.COMM_WORLD.send(trajectory, dest=learner_bound)

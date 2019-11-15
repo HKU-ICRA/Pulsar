@@ -26,8 +26,8 @@ class Agent(object):
     """How many agent steps the agent has been trained for."""
     return self.steps
 
-  def step(self):
-    self.steps += 1
+  def add_steps(self, steps):
+    self.steps += steps
 
   def save(self):
     with open(self.agent_file, 'wb') as f:

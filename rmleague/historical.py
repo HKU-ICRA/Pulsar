@@ -1,11 +1,14 @@
 from rmleague.player import Player
 from rmleague.agent import Agent
+from datetime import datetime
 
 
 class Historical(Player):
 
   def __init__(self, agent, payoff):
-    self._agent = Agent(agent.get_weights(), agent.agent_file)
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    self._agent = Agent(agent.get_weights(), agent.agent_file + dt_string)
     self._payoff = payoff
     self._parent = agent
 

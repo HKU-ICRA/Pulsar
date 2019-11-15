@@ -22,7 +22,7 @@ class League(object):
   def __init__(self,
                main_agents=1,
                main_exploiters=1,
-               league_exploiters=2):
+               league_exploiters=1):
     # Load payoff else create new payoff
     payoff_file = os.path.join(os.getcwd(), 'data', 'payoff')
     if os.path.isfile(payoff_file):
