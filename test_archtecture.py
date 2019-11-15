@@ -53,11 +53,6 @@ def test_pulsar():
         print(k + ":", actions[k].shape, neglogp[k].shape, entropy[k].shape)
     print('value:', value.shape)
     
-    for i in range(len(new_state)):
-        for j in range(len(new_state[i])):
-            new_state[i][j] = np.repeat(new_state[i][j][0:1][:], repeats=50, axis=0)
-    print(np.array(new_state).shape)
-
 
 #test_scalar_encoder()
 #test_entity_encoder()

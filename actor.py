@@ -20,7 +20,7 @@ agent_index = int(sys.argv[1])
 lam = float(sys.argv[2])
 gamma = float(sys.argv[3])
 # Training parameters
-training_duration = 5 # seconds
+training_duration = 10 # seconds
 learner_bound = int(sys.argv[4])
 # Build network architecture
 pulsar = Pulsar(training=True)

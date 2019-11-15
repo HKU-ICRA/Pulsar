@@ -4,14 +4,18 @@ import numpy as np
 from rmleague.player import Player
 
 
+def zerof():
+  return 0
+
+
 class Payoff:
 
   def __init__(self):
     self._players = []
-    self._wins = collections.defaultdict(lambda: 0)
-    self._draws = collections.defaultdict(lambda: 0)
-    self._losses = collections.defaultdict(lambda: 0)
-    self._games = collections.defaultdict(lambda: 0)
+    self._wins = collections.defaultdict(zerof)
+    self._draws = collections.defaultdict(zerof)
+    self._losses = collections.defaultdict(zerof)
+    self._games = collections.defaultdict(zerof)
     self._decay = 0.99
 
   def _win_rate(self, _home, _away):

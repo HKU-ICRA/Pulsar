@@ -94,7 +94,7 @@ class MainPlayer(Player):
   def ready_to_checkpoint(self):
     steps_passed = self.agent.get_steps() - self._checkpoint_step
     #if steps_passed < 2e9:
-    if steps_passed < 1e3:
+    if steps_passed < 5e8:
       return False
 
     historical = [
@@ -102,7 +102,7 @@ class MainPlayer(Player):
         if isinstance(player, Historical)
     ]
     win_rates = self._payoff[self, historical]
-    return win_rates.min() > 0.7 or steps_passed > 4e9
+    return win_rates.min() > 0.7 or steps_passed > 2e9
 
   def checkpoint(self):
     self._checkpoint_step = self.agent.get_steps()

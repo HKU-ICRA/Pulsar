@@ -2,7 +2,7 @@ import numpy as np
 
 
 def remove_monotonic_suffix(win_rates, players):
-  if not win_rates:
+  if not list(win_rates):
     return win_rates, players
 
   for i in range(len(win_rates) - 1, 0, -1):

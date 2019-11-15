@@ -16,6 +16,7 @@ ent_coef = 0.01
 vf_coef = 0.5
 CLIPRANGE = 0.2
 max_grad_norm = 0.5
+noptepochs = 4
 # Training parameters
 actor_lower_bound = int(sys.argv[2])
 actor_upper_bound = int(sys.argv[3])

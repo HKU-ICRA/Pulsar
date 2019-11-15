@@ -1,6 +1,7 @@
 import os
 import sys
 from mpi4py import MPI
+import pickle
 
 from rmleague.league import League
 from environment.envs.simple import make_env
@@ -12,7 +13,8 @@ def main():
     Trains the AlphaStar league.
     This main function acts as the coordinator for rmleague.
     """
-    rmleague = League()
+    league_file = os.path.join(os.getcwd(), 'data', 'league')
+    rmleague = load_rmleague(league_file)
 
     n_agents = 3
     actor_procs = 1
@@ -72,6 +74,27 @@ def main():
         print("Payoff draws:", rmleague._payoff._draws.values())
         print("Payoff loses:", rmleague._payoff._losses.values())
         sys.stdout.flush()
+        # Save progress
+        save_rmleague(rmleague, league_file)
+        save_main_player(rmleague, os.path.join(os.getcwd(), 'data', 'main_player'))
+
+
+def save_rmleague(rmleague, league_file):
+    with open(league_file, 'wb') as f:
+        pickle.dump(rmleague, f)
+
+
+def load_rmleague(league_file):
+    if os.path.isfile(league_file):
+        with open(league_file, 'rb') as f:
+            return pickle.load(f)
+    else:
+        return League()
+
+
+def save_main_player(rmleague,  mp_file):
+    with open(mp_file, 'wb') as f:
+        pickle.dump(rmleague.get_player(0), f)
 
 
 if __name__ == '__main__':
