@@ -52,8 +52,9 @@ def test_pulsar():
     print("entities:", entities.shape)
     print("entity masks:", entity_masks.shape)
     print("baseline:", baseline.shape)
-    actions, neglogp, entropy, mean, value, new_state = pulsar(scalar_features, entities, entity_masks, baseline)
+    actions, neglogp, entropy, mean, value, new_state, prev_state = pulsar(scalar_features, entities, entity_masks, baseline)
     #actions, neglogp, entropy, mean, value, new_state = pulsar(scalar_features, entities, entity_masks, baseline, new_state)
+    print(new_state)
     for k, v in actions.items():
         print(k + ":", actions[k].shape, neglogp[k].shape, entropy[k].shape)
     print('value:', value.shape)

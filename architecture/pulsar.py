@@ -116,8 +116,10 @@ class Pulsar(tf.keras.Model):
         with tf.name_scope("core"):
             core_input = tf.concat([embedded_entity, embedded_scalar], axis=-1)
             if state == None:
-                state = self.deeplstm.get_initial_state(core_input)
-            core_output, new_state = self.deeplstm(core_input, state)
+                prev_state = self.deeplstm.get_initial_state(core_input)
+            else:
+                prev_state = state
+            core_output, new_state = self.deeplstm(core_input, prev_state)
         with tf.name_scope("embedding_1"):
             embedding_1 = self.deepmlp_1(core_output, self.training)
             action_xyvel_layer = self.glu_1(embedding_1, scalar_context)
@@ -155,4 +157,4 @@ class Pulsar(tf.keras.Model):
         entropy = {'xyvel': entropy_xy, 'yaw': entropy_yaw}
         mean = {'xyvel': mean_xy, 'yaw': mean_yaw}
 
-        return actions, neglogp, entropy, mean, value, new_state
+        return actions, neglogp, entropy, mean, value, new_state, prev_state

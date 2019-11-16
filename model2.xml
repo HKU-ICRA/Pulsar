@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mujoco>
+	<compiler angle="radian" coordinate="local" meshdir="A:\Documents\GitHub\Pulsar\environment\assets\stls" texturedir="A:\Documents\GitHub\Pulsar\environment\assets\texture"></compiler>
+	<option timestep="0.005">
+		<flag warmstart="enable"></flag>
+	</option>
+	<worldbody>
+		<geom name="floor0" pos="5 5 0" size="5 5 1" type="plane" condim="3"></geom>
+		<body name="floor0" pos="5 5 0"></body>
+		<body name="agent0:robot" pos="0.6 0.6 0.15">
+			<joint axis="1 0 0" damping="10" name="agent0:tx" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 1 0" damping="10" name="agent0:ty" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 0 1" damping="1" name="agent0:tz" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 0 1" damping="10" name="agent0:rz" pos="0 0 0" type="hinge"></joint>
+			<body name="agent0:gimbal_yaw" pos="0 0 0">
+				<geom name="agent0:agent" mass="1" pos="0 0 0.05" mesh="agent0:gimbal_yaw" rgba="1 0 0 1" type="mesh" euler="1.57 0 0"></geom>
+			</body>
+			<body name="agent0:gimbal_pitch" pos="-0.1 0 0.25">
+				<geom name="agent0:connector" mass="1" pos="0.1 0 0.02" rgba="1 1 1 1" size="0.03 0.08" type="cylinder" euler="1.57 0 0"></geom>
+				<geom name="agent0:gimbal_pitch" mass="1" pos="0 0 0" mesh="agent0:gimbal_pitch" rgba="1 0 0 1" type="mesh" euler="1.57 0 0"></geom>
+				<geom name="agent0:barrel_head_geom" mass="0" pos="0.3 0 0" rgba="1 1 1 1" size="0.001 0.001 0.001" type="box" euler="0 0 0"></geom>
+				<body name="agent0:barrel_head" pos="0.4 0 0"></body>
+			</body>
+			<body name="agent0:chassis" pos="0 0 0">
+				<geom name="agent0:wheel1" mass="1" pos="0.16 0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent0:wheel2" mass="1" pos="-0.16 -0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent0:wheel3" mass="1" pos="-0.16 0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent0:wheel4" mass="1" pos="0.16 -0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent0:body_bot" mass="1" pos="0 0 -0.1" rgba="1 0 0 1" size="0.27 0.01" type="cylinder" euler="0 0 0"></geom>
+				<geom name="agent0:armor1" mesh="agent0:num1" mass="0.1" pos="0.25 0 0" rgba="1 0 0 1" type="mesh" euler="0 -0.174 -1.57"></geom>
+				<geom name="agent0:armor1_shield" mass="0" pos="0.21 0 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 0"></geom>
+				<geom name="agent0:armor_gap1" mass="0" pos="0.163 0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 0.785"></geom>
+				<geom name="agent0:armor2" mesh="agent0:num1" mass="0.1" pos="-0.25 0 0" rgba="1 0 0 1" type="mesh" euler="0 0.174 1.57"></geom>
+				<geom name="agent0:armor2_shield" mass="0" pos="-0.21 0 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 0"></geom>
+				<geom name="agent0:armor_gap2" mass="0" pos="-0.163 -0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 0.785"></geom>
+				<geom name="agent0:armor3" mesh="agent0:num1" mass="0.1" pos="0 0.25 0" rgba="1 0 0 1" type="mesh" euler="0.174 0 0"></geom>
+				<geom name="agent0:armor3_shield" mass="0" pos="0 0.21 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 1.57"></geom>
+				<geom name="agent0:armor_gap3" mass="0" pos="0.163 -0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 2.36"></geom>
+				<geom name="agent0:armor4" mesh="agent0:num1" mass="0.1" pos="0 -0.25 0" rgba="1 0 0 1" type="mesh" euler="-0.174 0 3.14"></geom>
+				<geom name="agent0:armor4_shield" mass="0" pos="0 -0.21 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 1.57"></geom>
+				<geom name="agent0:armor_gap4" mass="0" pos="-0.163 0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 2.36"></geom>
+				<geom name="agent0:body_top" mass="1" pos="0 0 0.05" rgba="1 0 0 1" size="0.23 0.01" type="cylinder" euler="0 0 0"></geom>
+			</body>
+		</body>
+		<body name="agent1:robot" pos="0.6 0.6 0.15">
+			<joint axis="1 0 0" damping="10" name="agent1:tx" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 1 0" damping="10" name="agent1:ty" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 0 1" damping="1" name="agent1:tz" pos="0 0 0" type="slide"></joint>
+			<joint axis="0 0 1" damping="10" name="agent1:rz" pos="0 0 0" type="hinge"></joint>
+			<body name="agent1:gimbal_yaw" pos="0 0 0">
+				<geom name="agent1:agent" mass="1" pos="0 0 0.05" mesh="agent1:gimbal_yaw" rgba="1 0 0 1" type="mesh" euler="1.57 0 0"></geom>
+			</body>
+			<body name="agent1:gimbal_pitch" pos="-0.1 0 0.25">
+				<geom name="agent1:connector" mass="1" pos="0.1 0 0.02" rgba="1 1 1 1" size="0.03 0.08" type="cylinder" euler="1.57 0 0"></geom>
+				<geom name="agent1:gimbal_pitch" mass="1" pos="0 0 0" mesh="agent1:gimbal_pitch" rgba="1 0 0 1" type="mesh" euler="1.57 0 0"></geom>
+				<geom name="agent1:barrel_head_geom" mass="0" pos="0.3 0 0" rgba="1 1 1 1" size="0.001 0.001 0.001" type="box" euler="0 0 0"></geom>
+				<body name="agent1:barrel_head" pos="0.4 0 0"></body>
+			</body>
+			<body name="agent1:chassis" pos="0 0 0">
+				<geom name="agent1:wheel1" mass="1" pos="0.16 0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent1:wheel2" mass="1" pos="-0.16 -0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent1:wheel3" mass="1" pos="-0.16 0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent1:wheel4" mass="1" pos="0.16 -0.16 -0.15" rgba="1 1 1 1" size="0.07 0.02" type="cylinder" condim="1" euler="1.57 0 0"></geom>
+				<geom name="agent1:body_bot" mass="1" pos="0 0 -0.1" rgba="1 0 0 1" size="0.27 0.01" type="cylinder" euler="0 0 0"></geom>
+				<geom name="agent1:armor1" mesh="agent1:num1" mass="0.1" pos="0.25 0 0" rgba="1 0 0 1" type="mesh" euler="0 -0.174 -1.57"></geom>
+				<geom name="agent1:armor1_shield" mass="0" pos="0.21 0 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 0"></geom>
+				<geom name="agent1:armor_gap1" mass="0" pos="0.163 0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 0.785"></geom>
+				<geom name="agent1:armor2" mesh="agent1:num1" mass="0.1" pos="-0.25 0 0" rgba="1 0 0 1" type="mesh" euler="0 0.174 1.57"></geom>
+				<geom name="agent1:armor2_shield" mass="0" pos="-0.21 0 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 0"></geom>
+				<geom name="agent1:armor_gap2" mass="0" pos="-0.163 -0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 0.785"></geom>
+				<geom name="agent1:armor3" mesh="agent1:num1" mass="0.1" pos="0 0.25 0" rgba="1 0 0 1" type="mesh" euler="0.174 0 0"></geom>
+				<geom name="agent1:armor3_shield" mass="0" pos="0 0.21 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 1.57"></geom>
+				<geom name="agent1:armor_gap3" mass="0" pos="0.163 -0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 2.36"></geom>
+				<geom name="agent1:armor4" mesh="agent1:num1" mass="0.1" pos="0 -0.25 0" rgba="1 0 0 1" type="mesh" euler="-0.174 0 3.14"></geom>
+				<geom name="agent1:armor4_shield" mass="0" pos="0 -0.21 0" rgba="0 1 0 1" size="0.01 0.12 0.1" type="box" euler="0 0 1.57"></geom>
+				<geom name="agent1:armor_gap4" mass="0" pos="-0.163 0.163 0" rgba="0 1 0 1" size="0.01 0.07 0.1" type="box" euler="0 0 2.36"></geom>
+				<geom name="agent1:body_top" mass="1" pos="0 0 0.05" rgba="1 0 0 1" size="0.23 0.01" type="cylinder" euler="0 0 0"></geom>
+			</body>
+		</body>
+	</worldbody>
+	<asset>
+		<mesh name="agent0:num1" file="num1.stl" scale="0.01 0.01 0.01"></mesh>
+		<mesh name="agent0:gimbal_yaw" file="gimbal_yaw.stl" scale="0.003 0.003 0.003"></mesh>
+		<mesh name="agent0:gimbal_pitch" file="gimbal_pitch.stl" scale="0.003 0.003 0.003"></mesh>
+		<mesh name="agent1:num1" file="num1.stl" scale="0.01 0.01 0.01"></mesh>
+		<mesh name="agent1:gimbal_yaw" file="gimbal_yaw.stl" scale="0.003 0.003 0.003"></mesh>
+		<mesh name="agent1:gimbal_pitch" file="gimbal_pitch.stl" scale="0.003 0.003 0.003"></mesh>
+	</asset>
+	<size nconmax="5000" njmax="5000"></size>
+	<actuator>
+		<motor name="agent0:motortx" ctrllimited="true" ctrlrange="-200 200" forcelimited="true" forcerange="-200 200" joint="agent0:tx"></motor>
+		<motor name="agent0:motorty" ctrllimited="true" ctrlrange="-200 200" forcelimited="true" forcerange="-200 200" joint="agent0:ty"></motor>
+		<motor name="agent0:motorrz" ctrllimited="true" ctrlrange="-150 150" forcelimited="true" forcerange="-100 100" joint="agent0:rz"></motor>
+		<motor name="agent1:motortx" ctrllimited="true" ctrlrange="-200 200" forcelimited="true" forcerange="-200 200" joint="agent1:tx"></motor>
+		<motor name="agent1:motorty" ctrllimited="true" ctrlrange="-200 200" forcelimited="true" forcerange="-200 200" joint="agent1:ty"></motor>
+		<motor name="agent1:motorrz" ctrllimited="true" ctrlrange="-150 150" forcelimited="true" forcerange="-100 100" joint="agent1:rz"></motor>
+	</actuator>
+</mujoco>

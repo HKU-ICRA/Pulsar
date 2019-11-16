@@ -23,7 +23,7 @@ gamma = float(sys.argv[3])
 training_duration = 10 # seconds
 learner_bound = int(sys.argv[4])
 # Build network architecture
-pulsar = Pulsar(training=True)
+pulsar = Pulsar(training=False)
 pulsar.call_build()
 opponent_pulsar = Pulsar(training=False)
 opponent_pulsar.call_build()
@@ -54,7 +54,7 @@ while True:
     mb_baselines = []
     mb_actions_xy = []
     mb_actions_yaw = []
-    mb_states = states
+    mb_states = []
 
     agent_rewards = 0
     opponent_rewards = 0
@@ -74,8 +74,9 @@ while True:
         scalar_features = {'match_time': np.array([[time.time() - start_time]])}
         scalar_features['bptt_match_time'] = np.expand_dims(scalar_features['match_time'], axis=1)
         baseline = entity_encoder.get_baseline(obs_dc)
-        actions, neglogp, entropy, mean, value, states = pulsar(scalar_features, entities, entity_masks, baseline, states)
+        actions, neglogp, entropy, mean, value, states, prev_state = pulsar(scalar_features, entities, entity_masks, baseline, states)
         mb_values.append(value)
+        mb_states.append(prev_state)
         mb_neglogpacs_xy += list(neglogp['xyvel'])
         mb_neglogpacs_yaw += list(neglogp['yaw'])
         mb_scalar_features['match_time'] += list(scalar_features['match_time'])
@@ -91,7 +92,7 @@ while True:
         entities, entity_masks = entity_encoder.concat_opp_encoded_entity_obs(obs_dc)
         entities = np.repeat(np.expand_dims(entities, axis=1), repeats=1, axis=1)
         baseline = entity_encoder.get_opp_baseline(obs_dc)
-        opp_actions, _, _, _, _, opponent_states = opponent_pulsar(scalar_features, entities, entity_masks, baseline, opponent_states)
+        opp_actions, _, _, _, _, opponent_states, _ = opponent_pulsar(scalar_features, entities, entity_masks, baseline, opponent_states)
         agent_actions.append({'action_movement': [np.array(opp_actions['xyvel'])[0][0], np.array(opp_actions['xyvel'])[0][1], np.array(opp_actions['yaw'])[0][0]]})
         # Take actions in env and look the results
         per_act = {k: [] for k in agent_actions[0].keys()}
@@ -144,10 +145,17 @@ while True:
     traj_outcome = {'outcome': match_outcome}
     comm.send(traj_outcome, dest=0)
     # Send trajectory to learner
-    trajectory = {'mb_scalar_features': mb_scalar_features, 'mb_entities': np.asarray(mb_entities),
-                  'mb_entity_masks': np.asarray(mb_entity_masks), 'mb_baselines': np.asarray(mb_baselines),
-                  'mb_actions_xy': np.asarray(mb_actions_xy), 'mb_actions_yaw': np.asarray(mb_actions_yaw),
-                  'mb_returns': mb_returns, 'mb_dones': mb_dones, 'mb_values': mb_values,
-                  'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy), 'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw),
-                  'mb_states': mb_states}
+    trajectory = {'mb_scalar_features': mb_scalar_features,
+                  'mb_entities': np.asarray(mb_entities, dtype=np.float32),
+                  'mb_entity_masks': np.asarray(mb_entity_masks, dtype=np.float32),
+                  'mb_baselines': np.asarray(mb_baselines, dtype=np.float32),
+                  'mb_actions_xy': np.asarray(mb_actions_xy, dtype=np.float32),
+                  'mb_actions_yaw': np.asarray(mb_actions_yaw, dtype=np.float32),
+                  'mb_returns': mb_returns,
+                  'mb_dones': mb_dones,
+                  'mb_values': mb_values,
+                  'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy, dtype=np.float32),
+                  'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw, dtype=np.float32),
+                  'mb_states': np.asarray(mb_states, dtype=np.float32)}
+
     MPI.COMM_WORLD.send(trajectory, dest=learner_bound)
