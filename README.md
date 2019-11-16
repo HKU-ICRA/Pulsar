@@ -1,5 +1,5 @@
 # Pulsar
-Pulsar is the main reinforcement learning framework we will train our agents to compete with.
+Pulsar is the main reinforcement learning framework we will train our agents to compete with. Currently the framework is divided into three major parts: rmleague for the training scheme, DPPO (actor/learner) for reinforcement learning, and a environment to act as a simulation of the game.
 
 # Network architecture
 ![Pulsar](https://github.com/HKU-ICRA/Pulsar/blob/master/architecture/pulsar_architecture.png)
@@ -7,7 +7,7 @@ Pulsar is the main reinforcement learning framework we will train our agents to 
 # Network framework per agent
 ![Pulsar_framework_agent](https://github.com/HKU-ICRA/Pulsar/blob/master/architecture/pulsar_framework_agent.png)
 
-# Network framework for rmleague
+# rmleague framework
 ![Pulsar_framework_process](https://github.com/HKU-ICRA/Pulsar/blob/master/rmleague/pulsar_framework_process.png)
 
 # Citations
