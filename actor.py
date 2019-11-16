@@ -59,8 +59,8 @@ while True:
     agent_rewards = 0
     opponent_rewards = 0
 
-    start_time = time.time()
-    while time.time() - start_time <  training_duration:
+    actual_start_time = time.time()
+    while time.time() - actual_start_time <  training_duration:
         # Reset model lstm states if done
         if dones:
             states = None
@@ -71,7 +71,7 @@ while True:
         obs_dc = deepcopy(obs)
         entities, entity_masks = entity_encoder.concat_encoded_entity_obs(obs_dc)
         entities = np.repeat(np.expand_dims(entities, axis=1), repeats=1, axis=1)
-        scalar_features = {'match_time': np.array([[time.time() - start_time]])}
+        scalar_features = {'match_time': np.array([[float(env.t)]])}
         scalar_features['bptt_match_time'] = np.expand_dims(scalar_features['match_time'], axis=1)
         baseline = entity_encoder.get_baseline(obs_dc)
         actions, neglogp, entropy, mean, value, states, prev_state = pulsar(scalar_features, entities, entity_masks, baseline, states)

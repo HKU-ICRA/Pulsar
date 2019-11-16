@@ -56,7 +56,7 @@ class RgbViewerBasic(cymj.MjRenderContextWindow):
             resolution = glfw.get_framebuffer_size(self.sim._render_context_window.window)
 
         resolution = np.array(resolution)
-        resolution = np.array([2560, 1440]) #resolution * min(1000 / np.min(resolution), 1)[2560 1559]
+        resolution = np.array([640, 480]) #resolution * min(1000 / np.min(resolution), 1)[2560 1559]
         resolution = resolution.astype(np.int32)
         if self.sim._render_context_offscreen is None:
             self.sim.render(resolution[0], resolution[1])

@@ -77,3 +77,7 @@ class EnvHandler():
     @property
     def n_actors(self):
         return self.env.metadata['n_actors']
+
+    @property
+    def t(self):
+        return self.env.t

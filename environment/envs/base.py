@@ -104,7 +104,7 @@ class Base(Env):
 def make_env(n_substeps=3, horizon=250, deterministic_mode=False, n_agents=2, env_no=1):
     
     env = Base(n_agents=n_agents, n_substeps=n_substeps, horizon=horizon,
-               floor_size=10, grid_size=50, deterministic_mode=deterministic_mode, env_no=env_no,
+               floor_size=5, grid_size=10, deterministic_mode=deterministic_mode, env_no=env_no,
                meshdir=os.path.join(os.getcwd(), "environment", "assets", "stls"),
                texturedir=os.path.join(os.getcwd(), "environment", "assets", "texture"))
     

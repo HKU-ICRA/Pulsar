@@ -24,6 +24,7 @@ def main():
     actor_lower_bounds = []
     actor_upper_bounds = []
 
+    # Start agent and learner processes
     for idx in range(n_agents):
         actor_lower_bound = 0
         actor_upper_bound = actor_procs
@@ -43,6 +44,13 @@ def main():
 
         agent = rmleague.get_player_agent(idx)
         sub_comm.send(agent, dest=learner_bound)
+    
+    # Start evaluator process
+    eval_comm  = MPI.COMM_SELF.Spawn(sys.executable,
+                                     args=['evaluator.py', str(0)],
+                                     maxprocs=1
+                                    )
+    eval_intv_steps = 100
     
     # Start coordinator loop
     opponent_coordinator = dict()
@@ -77,6 +85,11 @@ def main():
         # Save progress
         save_rmleague(rmleague, league_file)
         save_main_player(rmleague, os.path.join(os.getcwd(), 'data', 'main_player'))
+        # Run eval if main agent has enough steps
+        if rmleague.get_player_agent(0).get_steps() >= eval_intv_steps:
+            main_player_agent = rmleague.get_player_agent(0)
+            eval_comm.send(main_player_agent, dest=0)
+            eval_intv_steps += eval_intv_steps
 
 
 def save_rmleague(rmleague, league_file):

@@ -406,9 +406,9 @@ class Env(gym.Env):
                 self.viewer = MjViewer(self.sim)
             self.viewer.render()
         elif mode == 'rgb_array':
-            return self.sim.render(500, 500)
+            #return self.sim.render(500, 500)
             if self.rgbviewer is None:
-                from rgbviewer import RgbViewerBasic
+                from environment.worldgen.rgbviewer import RgbViewerBasic
                 self.rgbviewer = RgbViewerBasic(self.sim)
             return self.rgbviewer.render()
         else:
