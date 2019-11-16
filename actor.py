@@ -111,6 +111,7 @@ while True:
     #batch of steps to batch of rollouts
     mb_rewards = np.asarray(mb_rewards, dtype=np.float32) #np.squeeze(np.asarray(mb_rewards[i], dtype=np.float32), -1)
     mb_values = np.asarray(mb_values, dtype=np.float32)
+    mb_values = np.squeeze(np.squeeze(mb_values, -1), -1)
     mb_dones = np.asarray(mb_dones, dtype=np.bool)
     last_values = 0 #np.squeeze(deepcopy(model.value(sa_obs)), -1)
     # discount/bootstrap off value fn
