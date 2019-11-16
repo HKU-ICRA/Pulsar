@@ -48,7 +48,7 @@ while True:
     mb_neglogpacs_xy = []
     mb_neglogpacs_yaw = []
     mb_dones = []
-    mb_scalar_features = {'match_time': []}
+    mb_scalar_features = {'match_time': [], 'bptt_match_time': []}
     mb_entities = []
     mb_entity_masks = []
     mb_baselines = []
@@ -70,13 +70,16 @@ while True:
         # Get actions of training agent
         obs_dc = deepcopy(obs)
         entities, entity_masks = entity_encoder.concat_encoded_entity_obs(obs_dc)
+        entities = np.repeat(np.expand_dims(entities, axis=1), repeats=1, axis=1)
         scalar_features = {'match_time': np.array([[time.time() - start_time]])}
+        scalar_features['bptt_match_time'] = np.expand_dims(scalar_features['match_time'], axis=1)
         baseline = entity_encoder.get_baseline(obs_dc)
         actions, neglogp, entropy, mean, value, states = pulsar(scalar_features, entities, entity_masks, baseline, states)
         mb_values.append(value)
         mb_neglogpacs_xy += list(neglogp['xyvel'])
         mb_neglogpacs_yaw += list(neglogp['yaw'])
         mb_scalar_features['match_time'] += list(scalar_features['match_time'])
+        mb_scalar_features['bptt_match_time'] += list(scalar_features['bptt_match_time'])
         mb_entities += list(entities)
         mb_entity_masks += list(entity_masks)
         mb_baselines += list(baseline)
@@ -86,6 +89,7 @@ while True:
         # Get actions of opponent agent
         obs_dc = deepcopy(obs)
         entities, entity_masks = entity_encoder.concat_opp_encoded_entity_obs(obs_dc)
+        entities = np.repeat(np.expand_dims(entities, axis=1), repeats=1, axis=1)
         baseline = entity_encoder.get_opp_baseline(obs_dc)
         opp_actions, _, _, _, _, opponent_states = opponent_pulsar(scalar_features, entities, entity_masks, baseline, opponent_states)
         agent_actions.append({'action_movement': [np.array(opp_actions['xyvel'])[0][0], np.array(opp_actions['xyvel'])[0][1], np.array(opp_actions['yaw'])[0][0]]})
@@ -141,7 +145,7 @@ while True:
     # Send trajectory to learner
     trajectory = {'mb_scalar_features': mb_scalar_features, 'mb_entities': np.asarray(mb_entities),
                   'mb_entity_masks': np.asarray(mb_entity_masks), 'mb_baselines': np.asarray(mb_baselines),
-                  'mb_actions_xy': mb_actions_xy, 'mb_actions_yaw': mb_actions_yaw,
+                  'mb_actions_xy': np.asarray(mb_actions_xy), 'mb_actions_yaw': np.asarray(mb_actions_yaw),
                   'mb_returns': mb_returns, 'mb_dones': mb_dones, 'mb_values': mb_values,
                   'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy), 'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw),
                   'mb_states': mb_states}

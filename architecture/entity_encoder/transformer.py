@@ -32,7 +32,7 @@ class Transformer(tf.keras.layers.Layer):
         self.transformer_layers = []
         for i in range(num_trans_layers):
             self.transformer_layers.append(Transformer_layer(hidden_size, num_heads, attention_dropout, hidden_layer_size, train))
-        self.conv1d = tf.keras.layers.Conv1D(hidden_size, 1, name="conv1d")
+        self.conv1d = tf.keras.layers.Conv2D(hidden_size, 1, name="conv1d")
         self.linear_layer = tf.keras.layers.Dense(hidden_size, use_bias=True, name="linear_layer")
     
     def call(self, x, bias):
@@ -50,7 +50,7 @@ class Transformer(tf.keras.layers.Layer):
         output = self.conv1d(output)
         output = tf.nn.relu(output)
         entity_embeddings = output
-        embedded_entity = tf.math.reduce_mean(output, axis=1)
+        embedded_entity = tf.math.reduce_mean(output, axis=2)
         embedded_entity =  self.linear_layer(embedded_entity)
         embedded_entity = tf.nn.relu(embedded_entity)
         return entity_embeddings, embedded_entity

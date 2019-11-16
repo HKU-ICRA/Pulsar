@@ -40,7 +40,7 @@ class Attention(tf.keras.layers.Layer):
     # Layers for convoluting the output of each head
     self.conv1ds = []
     for i in range(num_heads):
-        self.conv1ds.append(tf.keras.layers.Conv1D(2 * hidden_size // self.num_heads, 1))
+        self.conv1ds.append(tf.keras.layers.Conv2D(2 * hidden_size // self.num_heads, 1))
 
     self.output_dense_layer = tf.keras.layers.Dense(hidden_size, use_bias=False,
                                               name="output_transform")
@@ -50,22 +50,23 @@ class Attention(tf.keras.layers.Layer):
     The tensor is transposed to insure the inner dimensions hold the correct
     values during the matrix multiplication.
     Args:
-      x: A tensor with shape [batch_size, length, hidden_size]
+      x: A tensor with shape [batch_size, time_size, length, hidden_size]
     Returns:
-      A tensor with shape [batch_size, num_heads, length, hidden_size/num_heads]
+      A tensor with shape [batch_size, time_size, num_heads, length, hidden_size/num_heads]
     """
     with tf.name_scope("split_heads"):
       batch_size = tf.shape(x)[0]
-      length = tf.shape(x)[1]
+      time_size = tf.shape(x)[1]
+      length = tf.shape(x)[2]
 
       # Calculate depth of last dimension after it has been split.
       depth = (self.hidden_size // self.num_heads)
 
       # Split the last dimension
-      x = tf.reshape(x, [batch_size, length, self.num_heads, depth])
+      x = tf.reshape(x, [batch_size, time_size, length, self.num_heads, depth])
 
       # Transpose the result
-      return tf.transpose(x, [0, 2, 1, 3])
+      return tf.transpose(x, [0, 1, 3, 2, 4])
 
   def call(self, x, y, bias, cache=None):
     """Apply attention mechanism to x and y.
@@ -118,7 +119,7 @@ class Attention(tf.keras.layers.Layer):
     # Double hidden_size via 1D convolution with kernel size 1
     attention_heads = []
     for i, conv1d in enumerate(self.conv1ds):
-        attention_heads.append(conv1d(attention_output[:, i, :, :]))
+        attention_heads.append(conv1d(attention_output[:, :, i, :, :]))
     
     attention_output = attention_heads[0]
     for i in range(1, len(attention_heads)):

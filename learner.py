@@ -17,6 +17,8 @@ vf_coef = 0.5
 CLIPRANGE = 0.2
 max_grad_norm = 0.5
 noptepochs = 4
+batch_size = 2048
+bptt_ts = 16
 # Training parameters
 actor_lower_bound = int(sys.argv[2])
 actor_upper_bound = int(sys.argv[3])
@@ -34,8 +36,10 @@ while True:
     for idx in range(actor_lower_bound, actor_upper_bound):
         trajectory = MPI.COMM_WORLD.recv()
     
-    mb_scalar_features = trajectory['mb_scalar_features']
-    mb_entities = trajectory['mb_entities']
+    nsteps = trajectory['mb_returns'].shape[0]
+    
+    b_scalar_features = trajectory['mb_scalar_features']
+    b_entities = trajectory['mb_entities']
     mb_entity_masks = trajectory['mb_entity_masks']
     mb_baselines = trajectory['mb_baselines']
     mb_actions_xy = trajectory['mb_actions_xy']
@@ -45,10 +49,36 @@ while True:
     mb_values = trajectory['mb_values']
     mb_neglogpacs_xy = trajectory['mb_neglogpacs_xy']
     mb_neglogpacs_yaw = trajectory['mb_neglogpacs_yaw']
-    mb_neglogpacs = mb_neglogpacs_xy + mb_neglogpacs_yaw
     mb_states = trajectory['mb_states']
-    nsteps = mb_returns.shape[0]
     agent.add_steps(nsteps)
+
+    # Set up BPTT
+    mb_scalar_features = {'match_time': [], 'bptt_match_time': []}
+    mb_entities = []
+    idxs = []
+    for idx in range(bptt_ts, nsteps):
+        if True in mb_dones[idx - bptt_ts:idx] and (idx + 1) % bptt_ts != 0:
+            continue
+        else:
+            idxs.append(idx)
+        mb_scalar_features['match_time'].append(b_scalar_features['match_time'][idx])
+        mb_scalar_features['bptt_match_time'].append(b_scalar_features['bptt_match_time'][idx - bptt_ts:idx, 0])
+        mb_entities.append(b_entities[idx - bptt_ts:idx, 0])
+    mb_scalar_features['match_time'] = np.array(mb_scalar_features['match_time'])
+    mb_scalar_features['bptt_match_time'] = np.array(mb_scalar_features['bptt_match_time'])
+    mb_entities = np.array(mb_entities)
+    nsteps = mb_entities.shape[0]
+
+    mb_entity_masks = trajectory['mb_entity_masks'][idxs]
+    mb_baselines = trajectory['mb_baselines'][idxs]
+    mb_actions_xy = trajectory['mb_actions_xy'][idxs]
+    mb_actions_yaw = trajectory['mb_actions_yaw'][idxs]
+    mb_returns = trajectory['mb_returns'][idxs, :, idxs]
+    mb_dones = trajectory['mb_dones'][idxs]
+    mb_values = trajectory['mb_values'][idxs]
+    mb_neglogpacs_xy = trajectory['mb_neglogpacs_xy'][idxs]
+    mb_neglogpacs_yaw = trajectory['mb_neglogpacs_yaw'][idxs]
+    mb_neglogpacs = mb_neglogpacs_xy + mb_neglogpacs_yaw
 
     if mb_states != None:
         for i in range(len(mb_states)):
@@ -65,6 +95,7 @@ while True:
         neglogpac_xy = pulsar.neglogp_xy(p_mean['xyvel'], mb_actions_xy)
         neglogpac_yaw = pulsar.neglogp_xy(p_mean['yaw'], mb_actions_yaw)
         neglogpac = neglogpac_xy + neglogpac_yaw
+
         # Calculate the entropy
         # Entropy is used to improve exploration by limiting the premature convergence to suboptimal policy.
         entropy = tf.reduce_mean(p_entropy['xyvel'] + p_entropy['yaw'])

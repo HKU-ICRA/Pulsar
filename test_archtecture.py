@@ -43,12 +43,17 @@ def test_scalar_encoder():
 def test_pulsar():
     pulsar = Pulsar(True)
     scalar_features = {'match_time': np.array([[120], [110], [100]])}
+    scalar_features['bptt_match_time'] = np.repeat(np.expand_dims(np.array([[120], [110], [100]], dtype=np.float32), axis=1), repeats=10, axis=1)
     entities = np.array([[[0, 1, 0], [1, 0, 0]], [[0, 0, 1], [1, 1, 0]], [[0, 0, 1], [1, 1, 0]]], dtype=np.float32)
+    entities = np.repeat(np.expand_dims(entities, axis=1), repeats=10, axis=1)
     entity_masks = np.array([[0, 1], [1, 0], [0, 1]], dtype=np.float32)
     baseline = np.array([[0,1,1], [0,0,1], [0,1,0]], dtype=np.float32)
-    print(scalar_features['match_time'].shape, entities.shape, entity_masks.shape, baseline.shape)
+    print("scalar features:", scalar_features['match_time'].shape)
+    print("entities:", entities.shape)
+    print("entity masks:", entity_masks.shape)
+    print("baseline:", baseline.shape)
     actions, neglogp, entropy, mean, value, new_state = pulsar(scalar_features, entities, entity_masks, baseline)
-    actions, neglogp, entropy, mean, value, new_state = pulsar(scalar_features, entities, entity_masks, baseline, new_state)
+    #actions, neglogp, entropy, mean, value, new_state = pulsar(scalar_features, entities, entity_masks, baseline, new_state)
     for k, v in actions.items():
         print(k + ":", actions[k].shape, neglogp[k].shape, entropy[k].shape)
     print('value:', value.shape)

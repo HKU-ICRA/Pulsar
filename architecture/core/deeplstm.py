@@ -16,7 +16,7 @@ class DeepLstm(tf.keras.layers.Layer):
         return initial_state
 
     def call(self, x, initial_state):
-        x = np.expand_dims(x, axis=1)
+        #x = np.expand_dims(x, axis=1)
         deeplstm_output = self.rnn(x, initial_state=initial_state)
         outputs, new_state = deeplstm_output[0], deeplstm_output[1:]
         return outputs, new_state

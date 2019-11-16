@@ -81,8 +81,10 @@ class Pulsar(tf.keras.Model):
         have the same shape as the actual inputs, otherwise the weights would not
         be restored properly.
         """
-        scalar_features = {'match_time': np.array([[120]])}
+        scalar_features = {'match_time': np.array([[120]], dtype=np.float32)}
+        scalar_features['bptt_match_time'] = np.expand_dims(scalar_features['match_time'], axis=1)
         entities = np.array([[[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]], dtype=np.float32)
+        entities = np.repeat(np.expand_dims(entities, axis=1), repeats=1, axis=1)
         entity_masks = np.array([[1, 1, 1, 1, 1]], dtype=np.float32)
         baseline = np.array([[1 for _ in range(18)]], dtype=np.float32)
         self(scalar_features, entities, entity_masks, baseline)
@@ -103,11 +105,14 @@ class Pulsar(tf.keras.Model):
         """
         with tf.name_scope("scalar_encoder"):
             encoded_match_time = self.match_time_encoder(scalar_features['match_time'])
-            embedded_scalar = tf.concat([encoded_match_time], axis=-1)
+            bptt_encoded_match_time = self.match_time_encoder(scalar_features['bptt_match_time'])
+            embedded_scalar = tf.concat([bptt_encoded_match_time], axis=-1)
             scalar_context = tf.concat([encoded_match_time], axis=-1)
         with tf.name_scope("entity_encoder"):
             bias = get_padding_bias(entity_masks)
+            bias = np.repeat(np.expand_dims(bias, axis=1), repeats=entities.shape[1], axis=1)
             entity_embeddings, embedded_entity = self.transformer(entities, bias)
+            entity_embeddings = entity_embeddings[:, -1, :, :]
         with tf.name_scope("core"):
             core_input = tf.concat([embedded_entity, embedded_scalar], axis=-1)
             if state == None:
@@ -122,7 +127,9 @@ class Pulsar(tf.keras.Model):
             embedding_2 = self.deepmlp_2(auto_regressive_embedding, self.training)
             embedding_2 = tf.expand_dims(embedding_2, axis=1)
             attention_input = tf.concat([embedding_2, entity_embeddings], axis=1)
+            attention_input = tf.expand_dims(attention_input, axis=1)
             action_yaw_layer = self.attention(attention_input, 0)
+            action_yaw_layer = tf.squeeze(action_yaw_layer, axis=1)
             action_yaw_layer = tf.reduce_sum(action_yaw_layer, axis=1)
         with tf.name_scope('xyvel'):
             std_xy = tf.exp(self.logstd_xy)
