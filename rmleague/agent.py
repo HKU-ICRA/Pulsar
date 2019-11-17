@@ -6,10 +6,9 @@ import pickle
 
 class Agent(object):
 
-  def __init__(self, weights, agent_file):
+  def __init__(self, weights):
     self.steps = 0
     self.weights = weights
-    self.agent_file = agent_file
 
   def initial_state(self):
     """Returns the hidden state of the agent for the start of an episode."""
@@ -28,12 +27,3 @@ class Agent(object):
 
   def add_steps(self, steps):
     self.steps += steps
-
-  def save(self):
-    with open(self.agent_file, 'wb') as f:
-      pickle.dump(self.steps, f)
-  
-  def load(self):
-    if os.path.isfile(self.agent_file):
-      with open(self.agent_file, 'rb') as f:
-        self.steps = pickle.load(f)

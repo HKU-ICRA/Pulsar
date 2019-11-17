@@ -10,13 +10,6 @@ from rmleague.league_exploiter import LeagueExploiter
 from architecture.pulsar import Pulsar
 
 
-def get_agent_files(name):
-    model_file = os.path.join(os.getcwd(), 'data', 'model:'+name)
-    agent_file = os.path.join(os.getcwd(), 'data', 'agent:'+name)
-    player_file = os.path.join(os.getcwd(), 'data', 'player:'+name)
-    return model_file, agent_file, player_file
-
-
 class League(object):
     def __init__(self,
                  main_agents=1,
@@ -31,33 +24,21 @@ class League(object):
 
         for idx in range(main_agents):
             ma_name = "main_agent:"+str(idx)
-            ma_model_file, ma_agent_file, ma_player_file = get_agent_files(ma_name)
-            pulsar.load(ma_model_file)
-            ma_agent = Agent(pulsar.get_weights(), ma_agent_file)
-            ma_agent.load()
-            main_agent = MainPlayer(ma_agent, self._payoff, ma_player_file, name=ma_name)
-            main_agent.load()
+            ma_agent = Agent(pulsar.get_weights())
+            main_agent = MainPlayer(ma_agent, self._payoff, name=ma_name)
             self._learning_agents.append(main_agent)
             self._payoff.add_player(main_agent.checkpoint())
 
         for idx in range(main_exploiters):
             me_name = "main_exploit:"+str(idx)
-            me_model_file, me_agent_file, me_player_file = get_agent_files(me_name)
-            pulsar.load(me_model_file)
-            me_agent = Agent(pulsar.get_weights(), me_agent_file)
-            me_agent.load()
-            main_exploiter = MainExploiter(me_agent, self._payoff, me_player_file, name=me_name)
-            main_exploiter.load()
+            me_agent = Agent(pulsar.get_weights())
+            main_exploiter = MainExploiter(me_agent, self._payoff, name=me_name)
             self._learning_agents.append(main_exploiter)
 
         for idx in range(league_exploiters):
             le_name = "league_exploit:"+str(idx)
-            le_model_file, le_agent_file, le_player_file = get_agent_files(le_name)
-            pulsar.load(le_model_file)
-            le_agent = Agent(pulsar.get_weights(), le_agent_file)
-            le_agent.load()
-            league_exploiters = LeagueExploiter(le_agent, self._payoff, le_player_file, name=le_name)
-            league_exploiters.load()
+            le_agent = Agent(pulsar.get_weights())
+            league_exploiters = LeagueExploiter(le_agent, self._payoff, name=le_name)
             self._learning_agents.append(league_exploiters)
 
         for player in self._learning_agents:
@@ -87,4 +68,9 @@ class League(object):
 
     def get_eval_intv_steps(self):
         return self.eval_intv_steps
-  
+    
+    def get_winrate(p1, p2):
+        return self._payoff._win_rate(p1, p2)
+    
+    def get_payoff_players(self):
+        return self._payoff.players

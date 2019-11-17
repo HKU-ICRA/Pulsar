@@ -90,6 +90,12 @@ while True:
     b_neglogpacs_yaw = trajectory['mb_neglogpacs_yaw'][bptt_ts:batch_size]
     b_states = trajectory['mb_states'][0:batch_size-bptt_ts]
 
+    # Create array to store variables for summary
+    approxkls = []
+    losses = []
+    entropies = []
+    returns = b_returns.copy()
+
     # Start SGD
     nbatch = b_returns.shape[0]
     inds = np.arange(nbatch)
@@ -170,10 +176,21 @@ while True:
                 # zip aggregate each gradient with parameters associated
                 # For instance zip(ABCD, xyza) => Ax, By, Cz, Da
                 pulsar.optimizer.apply_gradients(grads_and_var)
+                # Store variables for summary
+                approxkls.append(approxkl)
+                losses.append(loss)
+                entropies.append(entropy)
 
     # Send updated agent to actor
     agent.set_weights(pulsar.get_weights())
     for idx in range(actor_lower_bound, actor_upper_bound):
         MPI.COMM_WORLD.send(agent, dest=idx)
-    # Send updated agent to coordinator
-    comm.send(agent, dest=0)
+    # Send updated agent and summaries to coordinator
+    results = {
+        'agent': agent,
+        'approxkl': np.mean(approxkls, axis=0),
+        'loss': np.mean(losses, axis=0),
+        'entropy': np.mean(entropies, axis=0),
+        'return': np.mean(returns, axis=0)
+    }
+    comm.send(results, dest=0)

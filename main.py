@@ -1,6 +1,8 @@
 import os
 import sys
+import tensorflow as tf
 from mpi4py import MPI
+from datetime import datetime
 import pickle
 
 from rmleague.league import League
@@ -53,16 +55,23 @@ def main():
                                     )
     eval_intv_steps = 100
     '''
+
+    # Setup summary writer
+    dt_string = datetime.now().strftime("%Y%m%d-%H%M%S")
+    log_dir = os.path.join(os.getcwd(), "data", "logs", dt_string)
+    summary_writer = tf.summary.create_file_writer(log_dir)
     
     # Start coordinator loop
     opponent_coordinator = dict()
     while True:
+        # Send opponent to Actor
         for idx in range(n_agents):
             player = rmleague.get_player(idx)
-            opponent, tf = player.get_match()
+            opponent, match_bool = player.get_match()
             opponent_coordinator[idx] = opponent
             for ai in range(actor_lower_bounds[idx], actor_upper_bounds[idx]):
                 sub_comms[idx].send(opponent.get_agent(), dest=ai)
+        # Receive trajectory outcome from Actor
         for idx in range(n_agents):
             player = rmleague.get_player(idx)
             opponent = opponent_coordinator[idx]
@@ -71,27 +80,38 @@ def main():
                 rmleague.update(player, opponent, traj_outcome['outcome'])
                 if player.ready_to_checkpoint():
                     rmleague.add_player(player.checkpoint())
+        # Receive new agent and ppo summaries from Learner
         for idx in range(n_agents):
+            # Update agent of player
             player = rmleague.get_player(idx)
-            new_agent = sub_comms[idx].recv()
-            player.set_agent(new_agent)
-        # Report progress
-        for idx in range(n_agents):
-            print("Player", str(idx), "steps:", rmleague.get_player_agent(idx).get_steps())
-        print("Players:", len(rmleague._payoff._players))
-        print("Payoff games:", rmleague._payoff._games.values())
-        print("Payoff wins:", rmleague._payoff._wins.values())
-        print("Payoff draws:", rmleague._payoff._draws.values())
-        print("Payoff loses:", rmleague._payoff._losses.values())
-        sys.stdout.flush()
+            results = sub_comms[idx].recv()
+            player.set_agent(results['agent'])
+            player.incre_updates()
+            # Report and log each Player's PPO details
+            tf.summary.scalar(player.get_name()+':approxkl', results['approxkl'], step=player.get_updates())
+            tf.summary.scalar(player.get_name()+':loss', results['loss'], step=player.get_updates())
+            tf.summary.scalar(player.get_name()+':entropy', results['entropy'], step=player.get_updates())
+            tf.summary.scalar(player.get_name()+':return', results['return'], step=player.get_updates())
+            tf.summary.scalar(player.get_name()+':total_steps', player.get_agent().get_steps(), step=player.get_updates())
         # Save progress
         save_rmleague(rmleague, league_file)
         save_main_player(rmleague, os.path.join(os.getcwd(), 'data', 'main_player'))
         # Run eval if main agent has enough steps
         if rmleague.get_player_agent(0).get_steps() >= rmleague.get_eval_intv_steps():
+            # Run eval process
             main_player_agent = rmleague.get_player_agent(0)
             eval_comm.send(main_player_agent, dest=0)
+            # Report and log rmleague
+            tf.summary.scalar('no. of rmleague players', len(rmleague._payoff._players), step=rmleague.get_eval_intv_steps())
+            for i, p1 in enumerate(rmleague.get_payoff_players()):
+                for j, p2 in enumerate(rmleague.get_payoff_players()):
+                    if i != j:
+                        winrate = rmleague.get_winrate(p1, p2)
+                        tf.summary.scalar(p1.get_name()+' vs '+p2.get_name(), winrate, step=rmleague.get_eval_intv_steps())
             rmleague.incre_eval_intv_steps()
+        # Report end of while loop
+        print("Coordinator looped")
+        sys.stdout.flush()
 
 
 def save_rmleague(rmleague, league_file):

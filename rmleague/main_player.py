@@ -11,12 +11,12 @@ from rmleague.player_utils import remove_monotonic_suffix, pfsp
 
 class MainPlayer(Player):
 
-  def __init__(self, agent, payoff, player_file, name):
-    self.agent = Agent(agent.get_weights(), agent.agent_file)
+  def __init__(self, agent, payoff, name):
+    self.agent = Agent(agent.get_weights())
     self._payoff = payoff
-    self.player_file = player_file
     self.name = name
     self._checkpoint_step = 0
+    self.updates = 0
 
   def _pfsp_branch(self):
     historical = [
@@ -121,12 +121,11 @@ class MainPlayer(Player):
   def agent_file(self):
     return self.agent.agent_file
 
-  def save(self):
-    with open(self.player_file, 'wb') as f:
-      pickle.dump(self._checkpoint_step, f)
+  def get_name(self):
+    return self.name
   
-  def load(self):
-    if os.path.isfile(self.player_file):
-      with open(self.player_file, 'rb') as f:
-        self._checkpoint_step = pickle.load(f)
-    
+  def incre_updates(self):
+    self.updates += 1
+  
+  def get_updates(self):
+    return self.updates
