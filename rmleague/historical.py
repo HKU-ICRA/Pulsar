@@ -7,7 +7,7 @@ class Historical(Player):
 
   def __init__(self, agent, payoff):
     now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    dt_string = now.strftime("%d%m%Y-%H%M%S")
     self._agent = Agent(agent.get_weights(), agent.agent_file + dt_string)
     self._payoff = payoff
     self._parent = agent

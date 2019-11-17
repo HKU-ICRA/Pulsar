@@ -12,7 +12,7 @@ from rmleague.player_utils import remove_monotonic_suffix, pfsp
 class MainPlayer(Player):
 
   def __init__(self, agent, payoff, player_file, name):
-    self.agent = agent
+    self.agent = Agent(agent.get_weights(), agent.agent_file)
     self._payoff = payoff
     self.player_file = player_file
     self.name = name

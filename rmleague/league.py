@@ -77,4 +77,14 @@ class League(object):
 
     def add_player(self, player):
         self._payoff.add_player(player)
+    
+    def set_eval_intv_steps(self, steps):
+        self.eval_steps = steps
+        self.eval_intv_steps = steps
+    
+    def incre_eval_intv_steps(self):
+        self.eval_intv_steps += self.eval_steps
+
+    def get_eval_intv_steps(self):
+        return self.eval_intv_steps
   

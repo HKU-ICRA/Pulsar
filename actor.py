@@ -3,6 +3,8 @@ import sys
 from copy import deepcopy
 import numpy as np
 import time
+import pickle
+from datetime import datetime
 from mpi4py import MPI
 
 from environment.envs.base import make_env
@@ -35,6 +37,13 @@ n_agents = env.n_actors
 states = None
 opponent_states = None
 dones = False
+# Function to store trajectories
+def save_trajectory(trajectory):
+    now = datetime.now()
+    dt_string = now.strftime("%d%m%Y-%H%M%S")
+    trajectory_file = os.path.join(os.getcwd(), "data", "trajectories", dt_string)
+    with open(trajectory_file, 'wb') as f:
+        pickle.dump(trajectory, f)
 
 while True:
     agent = MPI.COMM_WORLD.recv()
@@ -157,5 +166,6 @@ while True:
                   'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy, dtype=np.float32),
                   'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw, dtype=np.float32),
                   'mb_states': np.asarray(mb_states, dtype=np.float32)}
+    save_trajectory(trajectory)
 
     MPI.COMM_WORLD.send(trajectory, dest=learner_bound)

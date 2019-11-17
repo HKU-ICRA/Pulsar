@@ -45,12 +45,14 @@ def main():
         agent = rmleague.get_player_agent(idx)
         sub_comm.send(agent, dest=learner_bound)
     
-    # Start evaluator process
+    # Start evaluator process (No eval during development so commented out)
+    '''
     eval_comm  = MPI.COMM_SELF.Spawn(sys.executable,
                                      args=['evaluator.py', str(0)],
                                      maxprocs=1
                                     )
     eval_intv_steps = 100
+    '''
     
     # Start coordinator loop
     opponent_coordinator = dict()
@@ -86,10 +88,10 @@ def main():
         save_rmleague(rmleague, league_file)
         save_main_player(rmleague, os.path.join(os.getcwd(), 'data', 'main_player'))
         # Run eval if main agent has enough steps
-        if rmleague.get_player_agent(0).get_steps() >= eval_intv_steps:
+        if rmleague.get_player_agent(0).get_steps() >= rmleague.get_eval_intv_steps():
             main_player_agent = rmleague.get_player_agent(0)
             eval_comm.send(main_player_agent, dest=0)
-            eval_intv_steps += eval_intv_steps
+            rmleague.incre_eval_intv_steps()
 
 
 def save_rmleague(rmleague, league_file):
@@ -102,7 +104,9 @@ def load_rmleague(league_file):
         with open(league_file, 'rb') as f:
             return pickle.load(f)
     else:
-        return League()
+        rmleague = League()
+        rmleague.set_eval_intv_steps(100000000) # Basically never during development
+        return rmleague
 
 
 def save_main_player(rmleague,  mp_file):
