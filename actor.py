@@ -166,6 +166,6 @@ while True:
                   'mb_neglogpacs_xy': np.asarray(mb_neglogpacs_xy, dtype=np.float32),
                   'mb_neglogpacs_yaw': np.asarray(mb_neglogpacs_yaw, dtype=np.float32),
                   'mb_states': np.asarray(mb_states, dtype=np.float32)}
-    save_trajectory(trajectory)
 
-    MPI.COMM_WORLD.send(trajectory, dest=learner_bound)
+    save_trajectory(trajectory)
+    MPI.COMM_WORLD.isend(trajectory, dest=learner_bound)

@@ -49,18 +49,24 @@ while True:
                   'mb_states': np.empty((batch_size, 3, 2, 1, 384), dtype=np.float32)}
     
     # Collect enough rollout to fill batch_size
-    agent.add_steps(batch_size)
     cur_traj_size = 0
-    for idx in range(actor_lower_bound, actor_upper_bound):
-        a_trajectory = MPI.COMM_WORLD.recv()
-        a_traj_size = a_trajectory['mb_returns'].shape[0]
-        for k, v in trajectory.items():
-            if k == 'mb_scalar_features':
-                trajectory[k]['match_time'][cur_traj_size:min(cur_traj_size+a_traj_size, batch_size)] = a_trajectory[k]['match_time'][0:max(0, batch_size-cur_traj_size)]
-                trajectory[k]['bptt_match_time'][cur_traj_size:min(cur_traj_size+a_traj_size, batch_size)] = a_trajectory[k]['bptt_match_time'][0:max(0, batch_size-cur_traj_size)]
-            else:
-                trajectory[k][cur_traj_size:min(cur_traj_size+a_traj_size, batch_size)] = a_trajectory[k][0:max(0, batch_size-cur_traj_size)]
-        
+    req = MPI.COMM_WORLD.irecv(1000000)
+    while cur_traj_size < batch_size:
+        received, a_trajectory = req.test()
+        if received:
+            a_traj_size = a_trajectory['mb_returns'].shape[0]
+            for k, v in trajectory.items():
+                if k == 'mb_scalar_features':
+                    trajectory[k]['match_time'][cur_traj_size:min(cur_traj_size+a_traj_size, batch_size)] = a_trajectory[k]['match_time'][0:max(0, batch_size-cur_traj_size)]
+                    trajectory[k]['bptt_match_time'][cur_traj_size:min(cur_traj_size+a_traj_size, batch_size)] = a_trajectory[k]['bptt_match_time'][0:max(0, batch_size-cur_traj_size)]
+                else:
+                    trajectory[k][cur_traj_size:min(cur_traj_size+a_traj_size, batch_size)] = a_trajectory[k][0:max(0, batch_size-cur_traj_size)]
+            cur_traj_size += min(a_traj_size, batch_size-cur_traj_size)
+            if cur_traj_size < batch_size:
+                req = MPI.COMM_WORLD.irecv(1000000)
+
+    agent.add_steps(batch_size)
+
     # Setup BPTT and SGD
     b_scalar_features = trajectory['mb_scalar_features']
     b_entities = trajectory['mb_entities']
