@@ -1,5 +1,21 @@
 import numpy as np
+import functools
 from mujoco_worldgen.parser import parse_file
+
+
+def clip_angle_range(angles):
+    """
+        Args:
+            angle: qpos angle from Mujoco
+        returns: angle in range 0 to 6.28
+    """
+    new_angles = []
+    for angle in angles:
+        if angle >= 0:
+            new_angles.append(angle % 6.28319)
+        else:
+            new_angles.append(6.28319 + (angle % 6.28319))
+    return np.array(new_angles)
 
 
 def get_size_from_xml(obj):
@@ -18,7 +34,7 @@ def get_size_from_xml(obj):
         return outer_bound['geom'][0]['@size'][:2] * 2
 
 
-def rejection_placement(env, placement_fn, floor_size, obj_size, num_tries=10):
+def rejection_placement(env, placement_fn, floor_size, obj_size, num_tries=10000):
     '''
         Args:
             env (gym.Env): environment
@@ -31,14 +47,15 @@ def rejection_placement(env, placement_fn, floor_size, obj_size, num_tries=10):
                     env.metadata (dict): environment metadata
                     random_state (np.random.RandomState): numpy random state
                 Returns: x, y placement position on grid
-            floor_size (float): size of floor
+            floor_size (float): [x, y] size of floor
             obj_size (float np.ndarray): [x, y] size of object
             num_tries (int): number of tries to place object
         Returns: int np.ndarray([x, y]) position on grid or None if no placement was found.
     '''
     grid = env.placement_grid
-    grid_size = len(grid)
-    cell_size = floor_size / grid_size
+    grid_size = grid.shape
+    floor_size = np.array(floor_size)
+    cell_size = [floor_size[0] / grid_size[0], floor_size[1] / grid_size[1]]
     obj_size_in_cells = np.ceil(obj_size / cell_size).astype(int)
 
     for i in range(num_tries):
@@ -61,9 +78,9 @@ def rejection_placement(env, placement_fn, floor_size, obj_size, num_tries=10):
 
 
 def uniform_placement(grid, obj_size, metadata, random_state):
-    grid_size = len(grid)
-    pos = np.array([random_state.randint(1, grid_size - obj_size[0] - 1),
-                    random_state.randint(1, grid_size - obj_size[1] - 1)])
+    grid_size = grid.shape
+    pos = np.array([random_state.randint(1, grid_size[0] - obj_size[0] - 1),
+                    random_state.randint(1, grid_size[1] - obj_size[1] - 1)])
 
     return pos
 

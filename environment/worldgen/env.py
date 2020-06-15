@@ -12,7 +12,6 @@ from mujoco_worldgen.util.sim_funcs import (
     empty_get_info,
     flatten_get_obs,
     false_get_diverged,
-    ctrl_set_action,
     zero_get_reward,
     )
 
@@ -31,7 +30,7 @@ class Env(gym.Env):
                  get_reward=zero_get_reward,
                  get_info=empty_get_info,
                  get_diverged=false_get_diverged,
-                 set_action=ctrl_set_action,
+                 set_action=None,
                  action_space=None,
                  horizon=100,
                  start_seed=None,
@@ -345,6 +344,7 @@ class Env(gym.Env):
         return [self._next_seed]
 
     def step(self, action):
+        action = action['action_movement'].flatten()
         action = np.asarray(action)
         action = np.minimum(action, self.action_space.high)
         action = np.maximum(action, self.action_space.low)
@@ -380,7 +380,7 @@ class Env(gym.Env):
             done = (self.t >= self.horizon)
         else:
             done = False
-
+        
         info = self.get_info(self.sim)
         info["diverged"] = divergence_reward
         # Return value as required by Gym

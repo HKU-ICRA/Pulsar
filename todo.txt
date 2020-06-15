@@ -1,0 +1,145 @@
+General:
+""" DONE """
+- Make no-enter area around robot (done)
+- Improve projectile speed (done)
+- Vary the projectile dodge tolerance (done)
+- Better shooting handling (done)
+- Better pulsar load save mechanisms (done)
+- Make reward main agent only (done)
+- Penalize for an obstacle being within own no-enter area (done)
+- Makes necessary changes to rmLeague to accommodate train then agents injection (done)
+- Fix buff initial spawn (done)
+- Fix debuff removal spawn time (done)
+- Determine whether qvel should be local or global (done) should be local
+- Determine what happens if two bullets strike an armor at the same time (check the update frequency and if within x seconds apart count as double hit) (done)
+- Add real time info to each update info (done)
+- there should be latency when transmitting control signal (if transmitting control signal) (done)
+- Reward normalization (with scale? since we found that * 10 helps)
+- Add noise to input data (perhaps via mujoco sensor) -> (Done via noise wrapper)
+- Change qvel to local via velocimeter and gyro with noise (maybe both local and global actually) (Done - used both)
+- Better record like saving more weights externally etc (Done in save.py)
+- Determine the actual needed size for no-enter-zone (Done by modifying mujoco to box with 25mm tolerance)
+- Make the robot's movement more realistic (Done via addition of mass)
+- Review the way of sending opponents and training procedure (Done, fixed opponent sending and recv)
+- Align every crucial stuff to robot's axis (maybe move every crtical thing to outside model body) (Done)
+- Domain randomization (Env done, just need to randomize barrel_sight and armors?) (Done, no armors though)
+- Allow robots to push dead robots out of the way gently (re-consider this) (Done, not implementing this)
+- Optimize with cython (Done, not much needed to optimize)
+- Form the game rules
+- Robot revival via hp boost
+- HP deducted from the Initial Firing Speed exceeds the limit, Barrel Heat exceeds the limit and the Referee System goes offline are not counted as HP Deduction.
+- Handle case when a teammate died (No need to handle actually)
+- Mask some info when teammate is downed (No need to mask)
+- Fix reward (Done, we append after every pulsar forward pass)
+- double check that the "unwrapped" of envhandler is passed as reference (Done, it is)
+""" NOT DONE (CRITICAL) """
+- Consider rounding data to whole number (i.e. grid based localization, rounded angles) to help generalize to real world sensors and precision
+""" NOT DONE (NON - CRITICAL) """
+- Read LR, nepochs from file periodically to update optimizer's LR etc
+- Hyper-parameter search
+- Ways to visualize embedding visualization
+
+
+Time stuff:
+""" DONE """
+- Buff time spawn management (done)
+- Improve bullets heat management (done)
+- Armor time detection interval (scrapped)
+- Fire rate (done)
+- Implement time mechanism (done - time warper)
+- Perhaps a confidence for each piece of data that decays with time / something else. Only not mask the data if high enough confidence (done, decided that every piece of data should only be used once)
+- Delay to data due to frequency of data update (depends, if quick enough then no, else do it using mask or other methods etc) (Done, info_masker)
+- Fix time warper for same time-step agents (Done, changed time-warper in env_step)
+""" NOT DONE """
+- Determine what period bullet heat management means
+
+
+Confirmation:
+""" DONE """
+- check if velocity commands are not instantaneous (won't instantly be at the set speed, maybe change mass etc)
+- check if buffs activate correctly
+- check if buffs function correctly
+- check if shooting work
+- check if no-enter-zone works
+- check if buffs spawn correctly on-time
+- check if all win-cons work
+""" NOT DONE """
+
+
+Artificial entities (consider) / more entities:
+""" DONE """
+- change way to handle buff obs (scrapped)
+- distance to each obstacle (for both self and other?) (done)
+- distance to other agents (done, no)
+- rotations to other agents (done, no)
+- distance to each buff (for both self and others?) (done, no)
+""" NOT DONE """
+- Enemy buff status
+
+
+Architecture:
+""" DONE """
+- Value target normalization (test) (done, don't use)
+- Action normalization instead of tanh (test, should prob stick with tanh) (done, we use discrete now)
+- Consider training a network that outputs both agents' actions, but deploy separately onto two different machines etc (done, no)
+- Test the attention masking mechanism (Done in Nav)
+- Decide between having an architecture that takes all inputs including external, or separate them into branches (Done, no)
+- Consider having orientation speed output be input to xy vel (Done, no, instead same branch output)
+- Optimizer saving handling (Done, just change it in main - learner)
+""" NOT DONE """
+- consider lowering the number of LSTM layers
+- Should use same way to handle value/policy architecture as https://arxiv.org/pdf/1910.07113.pdf
+- Consider parallelizing different branches of network, so if possible then use as much branches as possible
+
+
+rmLeague:
+""" DONE """
+- A new player is generated per day perhaps
+""" NOT DONE """
+
+
+Plan for each data:
+- Velocity:
+    1. local
+    2. gaussian noise (use velocimeter from Mujoco)
+    3. in real life, use multiple sensors + filtering to get make this as accurate as possible
+- Orientation:
+    1. global
+    2. gaussian noise (use gyro from Mujoco)
+    3. in real life, use multiple sensors + filtering to get make this as accurate as possible
+- Enemy position:
+    1. Should be provided based on compute station + robot's own camera observations
+- Yaw angles:
+    1. Maybe encode angles with sin and cos instead
+
+
+Discrete vs continuous + gaussian debate:
+""" FOR DISCRETE / AGAINST CONTINUOUS """
+- If discretized enough, should almost 100% match real-life
+- Continuous assumed gaussian noise which may not be true
+- Actions should be discrete (we 100% won't be able to guarantee the simulator's continuous action in real life)
+- Not sure to what extent is gaussian noise equivalent to just discretizing with allowance
+""" FOR CONTINUOUS / AGAINST DISCRETE """
+- Could take advantage of every piece of detail whereas discrete couldn't
+- Continuous keeps the input dimensions low, whereas if discrete might get very large
+- If we round continuous to specific places, might be able to retain the benefits of discrete plus the benefits of continuous
+
+
+Notes:
+- Choose between compute station network versus on-robot network
+- Could consider having perfect step model for own robot and circle/rectangle boundary for opponent robot
+- Maybe consider whether to not do an action if action is not allowed or do the second best action when max action is not allowed
+- Consider having cascade PID type of thing for yaw position control. Maybe the same for local xy regarding displacement and vel to move at
+- Consider having only an "attack enemy in-sight" option instead of armors for the simulation (in real life we externally create shooting algo)
+- Consider having a hard-coded constraint on not colliding with enemy robots to account for real-life situation
+- Consider the cases colliding versus being collided with and apply penalties accordingly
+- What if we have same value function updates for both actor?
+- Maybe 1st agent picks action, 2nd agent goes to perspective of 1st agent -> get action -> from that action generate own action
+- During match, could find best-match of opponents' agent from our rmLeague
+- Maybe use convolution like setting up a map-layout input with positions etc?
+- Need to add actual delay between commands (if using send cmd method)
+- Consider some network to "record" opponent movements, get their strategies, etc
+- Consider time-scale that makes time difference negligible (i.e. a few timestep difference in comms) and implement it to help generalize
+- Consider stacked maps for convolution
+- Reward shouldn't be "per step" dependent since we will be skipping steps to simulate real time
+- Take advantage of double experience from both ally agents

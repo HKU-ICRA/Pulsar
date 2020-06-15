@@ -20,7 +20,7 @@ class SplitMultiAgentActions(gym.ActionWrapper):
         })
 
     def action(self, action):
-        return action['action_movement'].flatten()
+        return action#action['action_movement'].flatten()
 
 
 class JoinMultiAgentActions(gym.ActionWrapper):

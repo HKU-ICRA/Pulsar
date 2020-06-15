@@ -21,7 +21,7 @@ class BulletObjFromXML(ObjFromXML):
         If you want to use custom XMLs, subclass this class and overwrite this
         method to return the path to your 'xmls' folder
         '''
-        return './assets/xmls/' + args[0]
+        return os.path.join(os.getcwd(), "environment", "assets", "xmls", args[0])
 
 class Bullets(EnvModule):
     '''

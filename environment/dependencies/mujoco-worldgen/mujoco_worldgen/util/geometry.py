@@ -4,7 +4,7 @@ from ctypes import c_int, addressof
 from math import sqrt
 
 
-def raycast(sim, geom1_id=None, geom2_id=None, pt1=None, pt2=None, geom_group=None):
+def raycast(sim, geom1_id=None, site1_id=None, geom2_id=None, pt1=None, pt2=None, geom_group=None):
     '''
         Given a mujoco sim, from a geom to a geom, point to a point
         Args:
@@ -16,11 +16,14 @@ def raycast(sim, geom1_id=None, geom2_id=None, pt1=None, pt2=None, geom_group=No
             geom_group: one-hot list determining which of the five geom groups
                         should be visible to the raycast
     '''
-    assert (geom1_id is None) != (pt1 is None), "geom1_id or p1 must be specified"
+    assert (geom1_id is None) != (pt1 is None) or site1_id != None, "geom1_id or p1 or site1_id must be specified"
     assert (geom2_id is None) != (pt2 is None), "geom2_id or p2 must be specified"
     if geom1_id is not None:
         pt1 = sim.data.geom_xpos[geom1_id]
         body1 = sim.model.geom_bodyid[geom1_id]
+    elif site1_id is not None:
+        pt1 = sim.data.site_xpos[site1_id]
+        body1 = sim.model.site_bodyid[site1_id]
     else:
         # Don't exclude any bodies if we originate ray from a point
         body1 = np.max(sim.model.geom_bodyid) + 1

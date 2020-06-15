@@ -1,15 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mujoco>
-	<option timestep="0.005"/>
 	<worldbody>
-		<body name="bullet" pos="0.01 0.01 0.0">
-			<joint axis="1 0 0" name="tx" pos="0 0 0" type="slide"></joint>
-			<joint axis="0 1 0" name="ty" pos="0 0 0" type="slide"></joint>
-			<joint axis="0 0 1" name="tz" pos="0 0 0" type="slide"></joint>
-			<geom size="0.01" mass="0.000001" type="sphere"></geom>
-		</body>
-        <body name="annotation:outer_bound" pos="0.01 0.01 0.0">
-			<geom conaffinity="0" contype="0" mass="0" pos="0 0 0" rgba="0.417 0.7203 0.0001 0.1" size="0.01 0.01 0.01" type="box"></geom>
+		<site name="bullet" size="100" type="sphere"></site>
+        <body name="annotation:outer_bound" pos="-1 -1 0.0">
+			<geom conaffinity="0" contype="0" mass="0" pos="0 0 0" rgba="0.417 0.7203 0.0001 0.1" size="100 100 100" type="box"></geom>
 		</body>
 	</worldbody>
 </mujoco>

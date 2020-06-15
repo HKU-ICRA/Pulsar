@@ -15,46 +15,38 @@ from environment.utils.vision import insight, in_cone2d
 class HealthWrapper(gym.Wrapper):
     '''
         Adds health mechanics to agents.
-        Args:
-            starting_health (float): number of times a food item can be eaten
-                                   before it disappears
     '''
-    def __init__(self, env, starting_health=100.0):
+    def __init__(self, env):
         super().__init__(env)
-        self.starting_health = starting_health
         self.n_agents = self.metadata['n_agents']
-
-        # Reset obs space
-        self.observation_space = update_obs_space(self.env, {'agents_health': (self.n_agents, 1)})
-
 
     def reset(self):
         obs = self.env.reset()
         sim = self.unwrapped.sim
-
-        # Reset agents' healths
-        self.agents_health = np.full((self.n_agents, 1), self.starting_health)
-        self.metadata['agents_health'] = self.agents_health
-
+        # Get new agents' info
+        self.agent_infos = self.metadata['agent_infos']
+        # Record additional hp given by buff
+        self.extra_hps = [0 for _ in range(self.n_agents)]
         return self.observation(obs)
 
     def observation(self, obs):
-        # Add agents' healths to obersvations
-        obs['agents_health'] = self.metadata['agents_health']
-        return obs
+        obs['agents_health'] = self.env.get_hp()
+        return obs        
+
+    def get_extra_hps(self):
+        return self.extra_hps
+
+    def health_buff(self, obs):
+        for i in range(self.n_agents):
+            restore_hp = obs['Agent:buff'][i][0][0]
+            if restore_hp:
+                self.env.set_buff_status(agent_idx=i, buff_idx=0, status=0)
+                for j in range(self.n_agents):
+                    if self.agent_infos[j]['team'] == self.agent_infos[i]['team']:
+                        self.env.add_hp(j, 200)
+                        self.extra_hps[j] += 200
 
     def step(self, action):
         obs, rew, done, info = self.env.step(action)
-        health_rew = np.array([0 for a in range(self.n_agents)])
-        agents_hp = self.metadata['agents_health']
-
-        assert np.array(agents_hp).shape != np.array(rew).shape, f"Shape of agent's health does not match reward's shape"
-
-        for i, ah in enumerate(agents_hp):
-            if (ah[0] <= 0):
-                health_rew[i] += -1
-                health_rew[1 - i] += 1
-                done = True
-        
-        rew += health_rew
+        self.health_buff(obs)
         return self.observation(obs), rew, done, info

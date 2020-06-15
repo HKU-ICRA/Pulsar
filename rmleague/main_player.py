@@ -11,12 +11,13 @@ from rmleague.player_utils import remove_monotonic_suffix, pfsp
 
 class MainPlayer(Player):
 
-  def __init__(self, agent, payoff, name):
+  def __init__(self, agent, payoff, name, checkpoint_steps):
     self.agent = Agent(agent.get_weights())
     self._payoff = payoff
     self.name = name
     self._checkpoint_step = 0
     self.updates = 0
+    self.checkpoint_steps = checkpoint_steps
 
   def _pfsp_branch(self):
     historical = [
@@ -93,8 +94,7 @@ class MainPlayer(Player):
 
   def ready_to_checkpoint(self):
     steps_passed = self.agent.get_steps() - self._checkpoint_step
-    #if steps_passed < 2e9:
-    if steps_passed < 5e8:
+    if steps_passed < self.checkpoint_steps:
       return False
 
     historical = [
@@ -102,7 +102,7 @@ class MainPlayer(Player):
         if isinstance(player, Historical)
     ]
     win_rates = self._payoff[self, historical]
-    return win_rates.min() > 0.7 or steps_passed > 2e9
+    return win_rates.min() > 0.7 or steps_passed > self.checkpoint_steps
 
   def checkpoint(self):
     self._checkpoint_step = self.agent.get_steps()
@@ -116,6 +116,9 @@ class MainPlayer(Player):
 
   def get_weights(self):
     return self.agent.get_weights()
+
+  def set_ckpt_steps(self, new_checkpoint_steps):
+    self.checkpoint_steps = new_checkpoint_steps
 
   @property
   def agent_file(self):

@@ -36,7 +36,7 @@ class WorldBuilder(Obj):
     def generate_xml_dict(self):
         ''' Get the mujoco header XML dict. It contains compiler, size and option nodes. '''
         compiler = OrderedDict()
-        compiler['@angle'] = 'radian'
+        compiler['@angle'] = 'degree'
         compiler['@coordinate'] = 'local'
         compiler['@meshdir'] = self.meshdir
         compiler['@texturedir'] = self.texturedir
@@ -71,7 +71,7 @@ class WorldBuilder(Obj):
         self.placements["top"] = {"origin": np.zeros(3),
                                   "size": self.world_params.size}
         name_indexes = OrderedDict()
-        self.to_names(name_indexes)
+        self.to_names(name_indexes=name_indexes)
         res = self.compile(self.random_state, world_params=self.world_params)
         if not res:
             raise FullVirtualWorldException('Failed to compile world')

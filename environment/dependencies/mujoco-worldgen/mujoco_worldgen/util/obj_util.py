@@ -79,10 +79,11 @@ def recursive_rename(xml_dict, prefix):
              "@target", "@childclass", "@body1", "@body2", "@mesh",
              "@joint1", "@joint2", "@geom", "@geom1", "@geom2", "@site",
              "@material", "@texture", "@tendon", "@sidesite", "@actuator"]
-    names = ["geom", "joint", "jointinparent", "body", "motor", "freejoint", "general",
+    names = ["geom", "joint", "jointinparent", "body", "motor", "velocity", "freejoint", "general",
              "position", "default", "weld", "exclude", "mesh",
-             "site", "pair", "jointpos", "touch", "texture", "material",
-             "fixed", "spatial", "motor", "actuatorfrc"]
+             "site", "pair", "jointpos", "touch", "velocimeter", "gyro",
+             "accelerometer", "magnetometer", "jointpos", "jointvel", "texture", "material",
+             "fixed", "spatial", "motor", "velocity", "actuatorfrc"]
     if not isinstance(xml_dict, OrderedDict):
         return
     for key in list(xml_dict.keys()):

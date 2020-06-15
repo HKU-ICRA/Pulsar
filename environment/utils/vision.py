@@ -34,11 +34,10 @@ def in_cone2d(origin_pts, origin_angles, cone_angle, target_pts):
     # Right now the only thing that should be nan will be targets that are on the origin point
     # This can only happen for the origin looking at itself, so just make this always true
     angle_between[np.isnan(angle_between)] = 0.
+    #return np.abs(normalize_angles(angle_between)) <= cone_angle
+    return np.abs(angle_between) <= cone_angle
 
-    return np.abs(normalize_angles(angle_between)) <= cone_angle
-
-
-def insight(sim, geom1_id, geom2_id=None, pt2=None, dist_thresh=np.inf, check_body=False):
+def insight(sim, geom1_id, site1_id=None, geom2_id=None, pt1=None, pt2=None, dist_thresh=np.inf, check_body=False):
     '''
         Check if geom2 or pt2 is in line of sight of geom1.
         Args:
@@ -51,7 +50,12 @@ def insight(sim, geom1_id, geom2_id=None, pt2=None, dist_thresh=np.inf, check_bo
             check_body (bool): Check whether the raycast hit any geom in the body that geom2 is in
                 rather than if it just hit geom2
     '''
-    dist, collision_geom = raycast(sim, geom1_id, geom2_id=geom2_id, pt2=pt2)
+    if geom1_id is not None:
+        dist, collision_geom = raycast(sim, geom1_id=geom1_id, geom2_id=geom2_id, pt2=pt2)
+    elif site1_id is not None:
+        dist, collision_geom = raycast(sim, site1_id=site1_id, geom2_id=geom2_id, pt2=pt2)
+    else:
+        dist, collision_geom = raycast(sim, pt1=pt1, geom2_id=geom2_id, pt2=pt2)
     if geom2_id is not None:
         if check_body:
             body2_id, collision_body_id = sim.model.geom_bodyid[[geom2_id, collision_geom]]

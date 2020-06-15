@@ -3,8 +3,8 @@ import tensorflow as tf
 
 class Glu(tf.keras.layers.Layer):
 
-    def __init__(self, input_size, output_size):
-        super(Glu, self).__init__()
+    def __init__(self, input_size, output_size, name=None):
+        super(Glu, self).__init__(name=name)
         self.gate_layer = tf.keras.layers.Dense(input_size, name="gate_layer")
         self.linear_layer = tf.keras.layers.Dense(output_size, name="linear_layer")
     

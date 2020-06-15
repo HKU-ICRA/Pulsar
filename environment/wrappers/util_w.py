@@ -48,13 +48,12 @@ class DiscretizeActionWrapper(gym.ActionWrapper):
 
     def action(self, action):
         action = deepcopy(action)
-
+        
         ac = action[self.action_key]
 
         # helper variables for indexing the discrete-to-continuous action map
         agent_idxs = np.tile(np.arange(ac.shape[0])[:, None], ac.shape[1])
         ac_idxs = np.tile(np.arange(ac.shape[1]), ac.shape[0]).reshape(ac.shape)
-
         action[self.action_key] = self.discrete_to_continuous_act_map[agent_idxs, ac_idxs, ac]
         return action
 

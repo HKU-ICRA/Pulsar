@@ -10,7 +10,7 @@ from mujoco_worldgen.util.path import worldgen_path
 from mujoco_worldgen import Geom
 from environment.worldgen.transforms import set_geom_attr_transform, add_weld_equality_constraint_transform, set_joint_damping_transform
 from environment.module.module import EnvModule
-from environment.module.util import rejection_placement, get_size_from_xml
+from environment.module.util import uniform_placement, rejection_placement, get_size_from_xml, clip_angle_range
 
 
 class AgentObjFromXML(ObjFromXML):
@@ -25,85 +25,52 @@ class AgentObjFromXML(ObjFromXML):
         return os.path.join(os.getcwd(), "environment", "assets", "xmls", args[0])
 
 
-def agent_set_action(sim, action):
-    '''
-        Set agent's action via qpos and qvel
-    '''
-    if sim.model.nmocap > 0:
-        _, action = np.split(action, (sim.model.nmocap * 7, ))
-    for i in range(action.shape[0]):
-        idx = sim.model.jnt_qposadr[sim.model.actuator_trnid[i, 0]]
-        sim.data.qpos[idx] = action[i]
-
-
-def ctrl_set_action_gimbalVer(sim, action):
-    '''
-        Set agent's action so that chassis can spin independently of gimbal
-    '''
-    if sim.model.nmocap > 0:
-        _, action = np.split(action, (sim.model.nmocap * 7, ))
-    if sim.data.ctrl is not None:
-        for i in range(action.shape[0]):
-            if sim.model.actuator_biastype[i] == 0:
-                sim.data.ctrl[i] = action[i]
-            else:
-                idx = sim.model.jnt_qposadr[sim.model.actuator_trnid[i, 0]]
-                sim.data.ctrl[i] = sim.data.qpos[idx] + action[i]
-
-
 class Agents(EnvModule):
     '''
         Add Agents to the environment.
-        Args:
-            n_agents (int): number of agents
-            placement_fn (fn or list of fns): See mae_envs.modules.util:rejection_placement for
-                spec. If list of functions, then it is assumed there is one function given
-                per agent
-            color (tuple or list of tuples): rgba for agent. If list of tuples, then it is
-                assumed there is one color given per agent
-            friction (float): agent friction
-            damp_z (bool): if False, reduce z damping to 1
-            polar_obs (bool): Give observations about rotation in polar coordinates
     '''
     @store_args
-    def __init__(self, n_agents, placement_fn=None, color=None, friction=None,
-                 damp_z=False, polar_obs=True):
-        pass
+    def __init__(self, n_agents, action_scale, add_bullets_visual=False, nbullets=0, polar_obs=True):
+        self.placement_fn = [uniform_placement for _ in range(n_agents)]
+        self.placement_size = (8080, 4480)
+        self.action_scale = action_scale
 
     def build_world_step(self, env, floor, floor_size):
+        # Add Agents. First agent must always be one of the main agents
+        teams = ['red', 'blue']
+        agent_infos = [dict() for _ in range(self.n_agents)]
+        main_agent_team = np.random.randint(0, 2)
+        agent_infos[0]['team'] = teams[main_agent_team]
+        agent_infos[1]['team'] = teams[main_agent_team]
+        agent_infos[2]['team'] = teams[1 - main_agent_team]
+        if self.n_agents == 4:
+            agent_infos[3]['team'] = teams[1 - main_agent_team]
+        # Set metadata
         env.metadata['n_agents'] = self.n_agents
+        self.agent_infos = agent_infos
+        env.metadata['agent_infos'] = agent_infos
         successful_placement = True
-
         for i in range(self.n_agents):
-            env.metadata.pop(f"agent{i}_initpos", None)
-
-        for i in range(self.n_agents):
-            obj = AgentObjFromXML("robot", name=f"agent{i}")
-            if self.friction is not None:
-                obj.add_transform(set_geom_attr_transform('friction', self.friction))
-            if self.color is not None:
-                _color = (self.color[i]
-                          if isinstance(self.color[0], (list, tuple, np.ndarray))
-                          else self.color)
-                obj.add_transform(set_geom_attr_transform('rgba', _color))
-            if not self.damp_z:
-                obj.add_transform(set_joint_damping_transform(1, 'tz'))
-
-            if self.placement_fn is not None:
-                _placement_fn = (self.placement_fn[i]
+            obj = AgentObjFromXML(agent_infos[i]['team'] + "_infantry", name=f"agent{i}")
+            if self.add_bullets_visual:
+                for bidx in range(self.nbullets):
+                    if agent_infos[i]['team'] == 'red':
+                        obj.mark(f"agent{i}:bullet{bidx}", absolute_xyz=(-100, -100, -100), rgba=(1, 0, 0, 1), size=np.array([10, 10, 10]))
+                    else:
+                        obj.mark(f"agent{i}:bullet{bidx}", absolute_xyz=(-100, -100, -100), rgba=(0, 0, 1, 1), size=np.array([10, 10, 10]))
+            agent_info = agent_infos[i]
+            _placement_fn = (self.placement_fn[i]
                                  if isinstance(self.placement_fn, list)
                                  else self.placement_fn)
-                obj_size = get_size_from_xml(obj)
-                pos, pos_grid = rejection_placement(env, _placement_fn, floor_size, obj_size)
-                if pos is not None:
-                    floor.append(obj, placement_xy=pos)
-                    # store spawn position in metadata. This allows sampling subsequent agents
-                    # close to previous agents
-                    env.metadata[f"agent{i}_initpos"] = pos_grid
-                else:
-                    successful_placement = False
+            obj_size = get_size_from_xml(obj)
+            pos, pos_grid = rejection_placement(env, _placement_fn, floor_size, obj_size)
+            if pos is not None:
+                floor.append(obj, placement_xy=pos)
+                # store spawn position in metadata. This allows sampling subsequent agents
+                # close to previous agents
+                env.metadata[f"agent{i}_initpos"] = pos_grid
             else:
-                floor.append(obj)
+                successful_placement = False
         return successful_placement
 
     def modify_sim_step(self, env, sim):
@@ -112,45 +79,47 @@ class Agents(EnvModule):
                                          for i in range(self.n_agents)])
         self.agent_qvel_idxs = np.array([qvel_idxs_from_joint_prefix(sim, f'agent{i}')
                                         for i in range(self.n_agents)])
-        env.metadata['agent_geom_idxs'] = [sim.model.geom_name2id(f'agent{i}:agent')
+        env.metadata['agent_geom_idxs'] = [sim.model.site_name2id(f'agent{i}:agent')
                                            for i in range(self.n_agents)]
+        # Randomize starting orientation of agents
+        for i in range(self.n_agents):
+            rqpos = qpos_idxs_from_joint_prefix(sim, f'agent{i}:rz')
+            sim.data.qpos[rqpos] = np.random.uniform(low=0, high=6.28319)
 
     def observation_step(self, env, sim):
         qpos = sim.data.qpos.copy()
-        qvel = sim.data.qvel.copy()
-
+        qvel = sim.data.qvel.copy()        
+        # Agent
         agent_qpos = qpos[self.agent_qpos_idxs]
         agent_qvel = qvel[self.agent_qvel_idxs]
-        agent_angle = agent_qpos[:, [-1]] - np.pi / 2  # Rotate the angle to match visual front
+        # Normalize angles in range 0 to 6.28
+        agent_angle = (clip_angle_range(agent_qpos[:, [-1]]) + 4.71239) % 6.28319
+        agent_qpos[:, [-1]] = agent_angle = normalize_angles(agent_angle)
+        # Normalize positions in range 0 to 1
+        agent_qpos[:, [0]] = agent_qpos[:, [0]] / self.placement_size[0]
+        agent_qpos[:, [1]] = agent_qpos[:, [1]] / self.placement_size[1]
+        # Normalize qvel in range -1 to 1
+        max_speed = np.sqrt(self.action_scale[0]**2 + self.action_scale[1]**2)
+        agent_qvel[:, [0]] = agent_qvel[:, [0]] / max_speed
+        agent_qvel[:, [1]] = agent_qvel[:, [1]] / max_speed
+        agent_qvel[:, [3]] = agent_qvel[:, [3]] / 4.71239
+        # Form observation, remove z-pos from qpos and qvel
+        agent_qpos = np.array([[aqpos[0], aqpos[1], aqpos[3]] for aqpos in agent_qpos])
+        agent_qvel = np.array([[aqvel[0], aqvel[1], aqvel[3]] for aqvel in agent_qvel])
         agent_qpos_qvel = np.concatenate([agent_qpos, agent_qvel], -1)
-        polar_angle = np.concatenate([np.cos(agent_angle), np.sin(agent_angle)], -1)
-        if self.polar_obs:
-            agent_qpos = np.concatenate([agent_qpos[:, :-1], polar_angle], -1)
-        agent_angle = normalize_angles(agent_angle)
+        # Velocimeter info
+        velocimeter_info = []
+        for i in range(self.n_agents):
+            velocimeter_idx = sim.model.sensor_name2id(f"agent{i}:velocimeter")
+            velocimeter_data = sim.data.sensordata[velocimeter_idx:velocimeter_idx+2]
+            velocimeter_data[0] /= self.action_scale[0]
+            velocimeter_data[1] /= self.action_scale[1]
+            velocimeter_info.append(velocimeter_data)
+        agent_local_qvel = np.array(velocimeter_info)
         obs = {
             'agent_qpos_qvel': agent_qpos_qvel,
             'agent_angle': agent_angle,
-            'agent_pos': agent_qpos[:, :3]
-              }
-
+            'agent_pos': agent_qpos[:, :3],
+            'agent_local_qvel': agent_local_qvel
+        }
         return obs
-
-
-class AgentManipulation(EnvModule):
-    '''
-        Adding this module is necessary for the grabbing mechanic implemented in GrabObjWrapper
-        (found in mae_envs/wrappers/manipulation.py) to work correctly.
-    '''
-    @store_args
-    def __init__(self):
-        pass
-
-    def build_world_step(self, env, floor, floor_size):
-        for i in range(env.n_agents):
-            floor.add_transform(add_weld_equality_constraint_transform(
-                f'agent{i}:gripper', f'agent{i}:particle', 'floor0'))
-        return True
-
-    def modify_sim_step(self, env, sim):
-        sim.model.eq_active[:] = 0
-        

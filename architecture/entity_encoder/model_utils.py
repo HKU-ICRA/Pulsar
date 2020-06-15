@@ -78,7 +78,7 @@ def get_decoder_self_attention_bias(length, dtype=tf.float32):
   return decoder_bias
 
 
-def get_padding(x, padding_value=0, dtype=tf.float32):
+def get_padding(x, padding_value=1, dtype=tf.float32):
   """Return float tensor representing the padding values in x.
   Args:
     x: int tensor with any shape

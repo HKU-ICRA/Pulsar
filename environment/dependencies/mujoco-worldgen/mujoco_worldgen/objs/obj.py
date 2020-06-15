@@ -234,7 +234,7 @@ class Obj(object):
         self.generate_name(name_indexes)
         for children in self.children.values():
             for child, _ in children:
-                child.to_names(name_indexes)
+                child.to_names(name_indexes=name_indexes)
         if self._material is not None:
             self._material.to_names(name_indexes)
 

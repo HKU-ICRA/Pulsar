@@ -48,7 +48,22 @@ class EnvHandler():
         return ac
 
     def reset(self):
-        obs = self.env.reset()
+        collisions = 1
+        while collisions:
+            obs = self.env.reset()
+            collisions = (abs(self.env.sim.data.get_sensor("B1_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("B2_site_touch"))+
+                        abs(self.env.sim.data.get_sensor("B3_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("B4_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("B5_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("B6_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("B7_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("B8_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("B9_site_touch")) +
+                        abs(self.env.sim.data.get_sensor("sw_site1_touch")) +
+                        abs(self.env.sim.data.get_sensor("sw_site2_touch")) +
+                        abs(self.env.sim.data.get_sensor("sw_site3_touch")) +
+                        abs(self.env.sim.data.get_sensor("sw_site4_touch")))
         return obs
 
     def render(self, mode):
@@ -81,3 +96,23 @@ class EnvHandler():
     @property
     def t(self):
         return self.env.t
+    
+    @property
+    def mjco_ts(self):
+        return self.env.mjco_ts
+    
+    @property
+    def n_substeps(self):
+        return self.env.n_substeps
+
+    @property
+    def metadata(self):
+        return self.env.metadata
+    
+    @property
+    def unwrapped(self):
+        return self.env.unwrapped
+    
+    @property
+    def ts(self):
+        return self.env.get_ts()
