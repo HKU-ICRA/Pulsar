@@ -15,3 +15,12 @@ Pulsar is the main reinforcement learning framework we will train our agents to 
 >Vinyals, O., Babuschkin, I., Czarnecki, W.M. et al. Grandmaster level in StarCraft II using multi-agent reinforcement learning. Nature
 >(2019) doi:10.1038/s41586-019-1724-z
 
+* Training algorithm:
+>@misc{wang2019truly,
+>    title={Truly Proximal Policy Optimization},
+>    author={Yuhui Wang and Hao He and Chao Wen and Xiaoyang Tan},
+>    year={2019},
+>    eprint={1903.07940},
+>    archivePrefix={arXiv},
+>    primaryClass={cs.LG}
+>}
