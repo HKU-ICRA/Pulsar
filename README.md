@@ -1,5 +1,8 @@
 # Pulsar
-Pulsar is the main reinforcement learning framework we will train our agents to compete with. Currently the framework is divided into three major parts: rmleague for the training scheme, Truly+Distributed PPO for reinforcement learning, and an environment to act as a simulation of the game.
+Pulsar is a research framework for training intelligent agents via reinforcement learning to compete in Robomaster's (ICRA) AI challenge. The framework is divided into three major parts: rmleague for the training scheme, Truly + Distributed PPO as the reinforcement learning algorithm, and a physics simulation to act as the simulation of the game.
+
+# Video (technical proposal)
+[![](http://img.youtube.com/vi/66CMskieKAU/0.jpg)](http://www.youtube.com/watch?v=66CMskieKAU "")
 
 # Network architecture
 ![Pulsar](https://github.com/HKU-ICRA/Pulsar/blob/master/architecture/pulsar_architecture.png)
@@ -24,3 +27,5 @@ Pulsar is the main reinforcement learning framework we will train our agents to 
 >    archivePrefix={arXiv},
 >    primaryClass={cs.LG}
 >}
+
+
