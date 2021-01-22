@@ -2,7 +2,7 @@
 Pulsar is a research framework for training intelligent agents via reinforcement learning to compete in Robomaster's (ICRA) AI challenge. The framework is divided into three major parts: rmleague for the training scheme, Truly + Distributed PPO as the reinforcement learning algorithm, and a physics simulation to act as the simulation of the game.
 
 # Demo of the simulation
-<img src="https://github.com/HKU-ICRA/Pulsar/blob/master/videos/pulsar_demo1.gif" width="250" height="250" />
+<img src="https://github.com/HKU-ICRA/Pulsar/blob/master/videos/pulsar_demo1.gif" width="500" height="500" /> <img src="https://github.com/HKU-ICRA/Pulsar/blob/master/videos/pulsar_demo2.gif" width="500" height="500" /> <img src="https://github.com/HKU-ICRA/Pulsar/blob/master/videos/pulsar_demo3.gif" width="500" height="500" />
 
 
 # Video (technical proposal)
