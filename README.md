@@ -4,6 +4,24 @@ Pulsar is a research framework for training intelligent agents via reinforcement
 # Demo of the simulation
 <img src="https://github.com/HKU-ICRA/Pulsar/blob/master/videos/pulsar_demo1.gif" width="500" height="500" /> <img src="https://github.com/HKU-ICRA/Pulsar/blob/master/videos/pulsar_demo2.gif" width="500" height="500" /> <img src="https://github.com/HKU-ICRA/Pulsar/blob/master/videos/pulsar_demo3.gif" width="500" height="500" />
 
+# RL algorithms tested
+Below contain a list of multi-agent reinforcement learning algorithms tested.
+
+1. Truly-PPO
+2. Hierarchical Critics Assignment for Multi-agent Reinforcement Learning
+3. Learning with Opponent-Learning Awareness
+4. Deep Multi-Agent Reinforcement Learning with Relevance Graphs
+5. TD3
+6. SARSA
+7. Probabilistic Recursive Reasoning for Multi-Agent Reinforcement Learning
+8. QTRAN: Learning to Factorize with Transformation for Cooperative Multi-Agent Reinforcement Learning
+9. Graph Convolutional Reinforcement Learning
+10. Duel-qlearning
+11. Deep deterministic policy gradient
+12. Counterfactual Multi-Agent Policy Gradients
+13. QMIX: Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning
+
+After conducting all tests against a benchmark, we have concluded that Truly-PPO has the best asymptotic performance, hence that was the algorithm chosen for further development.
 
 # Video (technical proposal)
 [![](http://img.youtube.com/vi/66CMskieKAU/0.jpg)](http://www.youtube.com/watch?v=66CMskieKAU "")
